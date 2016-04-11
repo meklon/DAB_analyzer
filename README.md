@@ -22,6 +22,7 @@ After DAB separation, script determines the DAB-positive area, using the default
 Script creates the result folder inside the --path. Statistics, log and syntetic images for each sample are saved here.
 ### User manual
 Place all the sample images (8-bit) inside the separate folder. Subdirectories are excluded from analysis. Use the following options:
+
 *-p, --path* (obligate) - path to the target directory with samples
 
 *-t, --thresh* (optional) - threshold for DAB+ area separation. If empty the default value would be used.
