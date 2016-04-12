@@ -29,5 +29,12 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 
 *-s, --silent* (otional) - if True, the real-time synthetic image visualisation would be supressed. The output will be just saved in the result folder.
 
+### Image samples requirements
+1. Image samples' *white balance should be normalized*! It is important to get the right colors of stains before separation. I could suggest free software like [Rawtherapee](http://rawtherapee.com/)
+2. Images should be acquired using the *same exposure values*
+3. Threshold should be the same at the whole image sequence if you want to compare them
+4. It would be better to use the manual mode in microscope camera to be sure, that your images were taken with the same parameters.
+5. Don't change light intensity in microscope during the sequence acquiring.
+
 ### Authorship
 Gumenyuk Ivan, Kuban state medical university, Russia.
