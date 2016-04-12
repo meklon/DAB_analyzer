@@ -20,6 +20,25 @@ Color deconvolution is used to separate stains in multi-stained sample. This sof
 After DAB separation, script determines the DAB-positive area using the default or user-defined threshold. The empty areas are excluded from the final realative area measurement as the sample could contain free space, which would affect the result accuracy.
 
 Script creates the result folder inside the --path. Statistics, log and synthetic images for each sample are saved there.
+### Examples
+You can find test images in this repository.
+#### Synthetic image examples
+Script will render this type of image for **each of your samples**. User should control the result to be sure that the threshold values are right
+![Synthetic image example 1](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Native_Pan_05_analysis.png "Synthetic image example")
+
+![Synthetic image example 2](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Native_Trop_02_analysis.png "Synthetic image example")
+#### Log example
+```
+Created result directory
+Images for analysis: 4
+Image 1/4 saved: /home/meklon/temp/sample/result/Native_Lam_08_analysis.png
+Image 2/4 saved: /home/meklon/temp/sample/result/Native_Lam_09_analysis.png
+Image 3/4 saved: /home/meklon/temp/sample/result/Native_Pan_01_analysis.png
+Image 4/4 saved: /home/meklon/temp/sample/result/Native_Pan_02_analysis.png
+CSV saved: /home/meklon/temp/sample/result/test.csv
+Analysis time: 31.8 seconds
+Average time per image: 8.0 seconds
+```
 ### User manual
 Place all the sample images (8-bit) inside the separate folder. Subdirectories are excluded from analysis. Use the following options:
 
@@ -28,6 +47,11 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 *-t, --thresh* (optional) - threshold for DAB+ area separation. If empty the default value would be used.
 
 *-s, --silent* (otional) - if True, the real-time synthetic image visualisation would be supressed. The output will be just saved in the result folder.
+
+####Example
+````
+python dab_deconv_area.py -p /home/meklon/Data/sample/test/ -t 60 -s 
+````
 
 ### Image samples requirements
 1. Image samples' **white balance should be normalized**! It is important to get the right colors of stains before separation. I could suggest free software like [Rawtherapee](http://rawtherapee.com/)
