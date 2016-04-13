@@ -39,6 +39,13 @@ CSV saved: /home/meklon/temp/sample/result/test.csv
 Analysis time: 31.8 seconds
 Average time per image: 8.0 seconds
 ```
+#### CSV output example
+Filename | DAB-positive area, pixels | Empty area, % | DAB-positive area, %
+------------ | ------------- | ------------- | -------------
+Alex_Pan_06.jpg|1575294.0|20.31|61.55
+Native_Pan_05.jpg|382690.0|16.26|14.23
+Native_Trop_02.jpg|248915.0|28.42|10.83
+
 ### User manual
 Place all the sample images (8-bit) inside the separate folder. Subdirectories are excluded from analysis. Use the following options:
 
@@ -52,7 +59,7 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 
 ####Example
 ````
-python dab_deconv_area.py -p /home/meklon/Data/sample/test/ -t 60 -s 
+python dab_deconv_area.py -p /home/meklon/Data/sample/test/ -t 60 -e 89 -s 
 ````
 
 ### Image samples requirements
