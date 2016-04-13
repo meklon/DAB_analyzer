@@ -82,6 +82,9 @@ parser.add_argument("-p", "--path", required=True, help="Path to the directory o
 parser.add_argument("-t", "--thresh", required=False, type=int, help="Global threshold for DAB-positive area,"
                                                                      "from 0 to 100.Optimal values are usually"
                                                                      " located from 40 to 65.")
+parser.add_argument("-e", "--empty", required=False, type=int, help="Global threshold for EMPTY area,"
+                                                                     "from 0 to 100.Optimal values are usually"
+                                                                     " located from 88 to 95.")
 parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
                                                            " only the final results"
                                                            " would be saved", action="store_true")
@@ -152,7 +155,11 @@ for filename in sorted(filenames):
     else:
         threshDefault = 55
     threshDAB_pos = stainDAB > threshDefault
-    threshIHC_v = ihc_v > 92
+    if args.empty:
+        threshEmptyDefault = args.empty
+    else:
+        threshEmptyDefault = 92
+    threshIHC_v = ihc_v > threshEmptyDefault
 
     # Count areas from numpy arrays
     areaAll = float(threshDAB_pos.size)
