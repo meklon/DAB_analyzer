@@ -13,7 +13,7 @@ Python libraries: numpy, scipy, skimage, PIL, matplotlib, argparse,os, csv, time
 No GUI, command line interface only.
 
 ### Basic principles:
-Script uses the **color deconvolution method**. It was described by [G. Landini](http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html). See also: *Ruifrok AC, Johnston DA. Quantification of histochemical staining by color deconvolution. Anal Quant Cytol Histol 23: 291-299, 2001.*
+Script uses the **color deconvolution method**. It was described well by [G. Landini](http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html). Python port from SciPy package of his algorythm was used. See also: *Ruifrok AC, Johnston DA. Quantification of histochemical staining by color deconvolution. Anal Quant Cytol Histol 23: 291-299, 2001.*
 
 Color deconvolution is used to separate stains in multi-stained sample. This soft is applied for Hematoxyline + DAB staining. Script uses hardcoded stain matrix determined for our lab's dyes. You should determine your own for better result using ImageJ and hyperlink above. Determined custom matrix should replace the default one. For additional information see the comments in code.
 
