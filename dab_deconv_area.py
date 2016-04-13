@@ -99,6 +99,8 @@ arrayFilenames = np.empty([0, 1])
 boolProgress_show = args.silent
 
 # Custom calculated matrix of lab's stains DAB + Hematoxylin
+# Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
+# More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
 customDAB = np.array([[0.66504073, 0.61772484, 0.41968665],
                       [0.4100872, 0.5751321, 0.70785],
                       [0.6241389, 0.53632, 0.56816506]])
