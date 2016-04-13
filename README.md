@@ -44,7 +44,8 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 
 *-p, --path* (obligate) - path to the target directory with samples
 
-*-t, --thresh* (optional) - threshold for DAB+ area separation. If empty the default value would be used.
+*-t, --thresh* (optional) - threshold for DAB+ area separation. If empty the default value would be used (threshDefault = 55).
+*-e, --empty* (optional) - threshold for **empty area** separation. If empty the default value would be used (threshEmptyDefault = 92).
 
 *-s, --silent* (otional) - if True, the real-time synthetic image visualisation would be supressed. The output will be just saved in the result folder.
 
