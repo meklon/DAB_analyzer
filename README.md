@@ -26,7 +26,7 @@ You can find test images in this repository.
 Script will render this type of image for **each of your samples**. User should control the result to be sure that the threshold values are right
 ![Synthetic image example 1](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Native_Pan_05_analysis.png "Synthetic image example")
 
-![Synthetic image example 2](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Native_Trop_02_analysis.png "Synthetic image example")
+![Synthetic image example 2](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Alex_Pan_08_analysis.png "Synthetic image example")
 #### Log example
 ```
 Created result directory
