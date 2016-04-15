@@ -7,7 +7,7 @@ Quantitative analysis of extracellular matrix proteins in IHC-analysis, designed
 ### Requirements:
 Python 2.7 (Not tested with Python 3+ versions)
 
-Python libraries: numpy, scipy, skimage, PIL, matplotlib, argparse,os, csv, timeit
+Python libraries: numpy, scipy, skimage, matplotlib
 
 ### Interface type:
 No GUI, command line interface only.

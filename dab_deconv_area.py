@@ -1,12 +1,71 @@
-import numpy as np
-from scipy import linalg
-from skimage import color
-from PIL import Image
-import matplotlib.pyplot as plt
 import argparse
 import os
 import csv
 import timeit
+from PIL import Image
+
+import numpy as np
+from scipy import linalg
+from skimage import color
+import matplotlib.pyplot as plt
+
+
+def parse_arguments():
+    # Parsing arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
+    parser.add_argument("-t", "--thresh", required=False, type=int, help="Global threshold for DAB-positive area,"
+                                                                         "from 0 to 100.Optimal values are usually"
+                                                                         " located from 40 to 65.")
+    parser.add_argument("-e", "--empty", required=False, type=int, help="Global threshold for EMPTY area,"
+                                                                        "from 0 to 100.Optimal values are usually"
+                                                                        " located from 88 to 95.")
+    parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
+                                                               " only the final results"
+                                                               " would be saved", action="store_true")
+    arguments = parser.parse_args()
+    return arguments
+
+
+def get_image_filenames(path):
+    return [name for name in sorted(os.listdir(path))
+            if not os.path.isdir(os.path.join(path, name))]
+
+
+def calc_deconv_matrix():
+    # Custom calculated matrix of lab's stains DAB + Hematoxylin
+    # Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
+    # More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
+    custom_dab = np.array([[0.66504073, 0.61772484, 0.41968665],
+                          [0.4100872, 0.5751321, 0.70785],
+                          [0.6241389, 0.53632, 0.56816506]])
+    # Alternative matrix DAB + Hematoxylin
+    # custom_dab = np.array([[0.34388107, 0.9115486, 0.22544378],
+    #                       [0.14550355, 0.4053599, 0.90250325],
+    #                       [0.92767155, 0.06901047, 0.3669646]])
+
+    custom_dab[2, :] = np.cross(custom_dab[0, :], custom_dab[1, :])
+    custom_dab_matrix = linalg.inv(custom_dab)
+    return custom_dab_matrix
+
+
+def print_log(text_log, bool_log_new=False):
+    # Write the log and show the text in console
+    output_log_path = outputPath + "log.txt"
+    if bool_log_new:
+        print text_log
+        # Initialize empty file
+        with open(output_log_path, "a") as fileLog:
+            fileLog.write("")
+        with open(output_log_path, "w") as fileLog:
+            fileLog.write(text_log)
+            fileLog.write('\n')
+    else:
+        print text_log
+        with open(output_log_path, "a") as fileLog:
+            fileLog.write(text_log)
+            fileLog.write('\n')
+
 
 def plot_figure():
     plt.figure(num=None, figsize=(15, 7), dpi=120, facecolor='w', edgecolor='k')
@@ -20,16 +79,16 @@ def plot_figure():
 
     plt.subplot(233)
     plt.title('Histogram of DAB')
-    (n, bins, patches) = plt.hist(stainDAB_1D, bins = 128, range=[0, 100], histtype='step', fc='k', ec='#ffffff')
+    (n, bins, patches) = plt.hist(stainDAB_1D, bins=128, range=[0, 100], histtype='step', fc='k', ec='#ffffff')
     # As np.size(bins) = np.size(n)+1, we make the arrays equal to plot the area after threshold
-    bins_equal = np.delete(bins,np.size(bins)-1, axis=0)
+    bins_equal = np.delete(bins, np.size(bins)-1, axis=0)
     # clearing subplot after getting the bins from hist
     plt.cla()
     plt.fill_between(bins_equal, n, 0, facecolor='#ffffff')
-    plt.fill_between(bins_equal, n, 0, where= bins_equal >= threshDefault,  facecolor='#c4c4f4',
-                     label = 'positive area')
-    plt.axvline(threshDefault+0.5, color='k', linestyle='--', label = 'threshold', alpha = 0.8)
-    plt.legend(fontsize = 8)
+    plt.fill_between(bins_equal, n, 0, where=bins_equal >= threshDefault,  facecolor='#c4c4f4',
+                     label='positive area')
+    plt.axvline(threshDefault+0.5, color='k', linestyle='--', label='threshold', alpha=0.8)
+    plt.legend(fontsize=8)
     plt.xlabel("Pixel intensity, %")
     plt.ylabel("Number of pixels")
     plt.grid(True, color='#888888')
@@ -48,76 +107,35 @@ def plot_figure():
 
     plt.tight_layout()
 
-def save_csv():
-    arrayOutput = np.hstack((arrayFilenames, arrayData))
-    arrayOutput = np.vstack((["Filename", "DAB-positive area, pixels",
-                                           "Empty area, %", "DAB-positive area, %"], arrayOutput))
-    # write array to csv file
-    outputCSVPath = outputPath + "test.csv"
-    with open(outputCSVPath, 'w') as f:
-        csv.writer(f).writerows(arrayOutput)
-    print "CSV saved: " + outputCSVPath
-def print_log(textLog, bool_log_new = False):
-    # Write the log and show the text in console
-    outputLogPath = outputPath + "log.txt"
-    if bool_log_new:
-        print textLog
-        # Initialize empty file
-        with open(outputLogPath, "a") as fileLog:
-            fileLog.write("")
-        with open(outputLogPath, "w") as fileLog:
-            fileLog.write(textLog)
-            fileLog.write('\n')
-    else:
-        print textLog
-        with open(outputLogPath, "a") as fileLog:
-            fileLog.write(textLog)
-            fileLog.write('\n')
-def get_image_filenames(path):
-    return [name for name in sorted(os.listdir(path))
-            if not os.path.isdir(os.path.join(path, name))]
-# Parsing arguments
-parser = argparse.ArgumentParser()
-parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
-parser.add_argument("-t", "--thresh", required=False, type=int, help="Global threshold for DAB-positive area,"
-                                                                     "from 0 to 100.Optimal values are usually"
-                                                                     " located from 40 to 65.")
-parser.add_argument("-e", "--empty", required=False, type=int, help="Global threshold for EMPTY area,"
-                                                                     "from 0 to 100.Optimal values are usually"
-                                                                     " located from 88 to 95.")
-parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
-                                                           " only the final results"
-                                                           " would be saved", action="store_true")
-args = parser.parse_args()
 
-# Initialize the global timer
-startTimeGlobal = timeit.default_timer()
+def save_csv():
+    array_output = np.hstack((arrayFilenames, arrayData))
+    array_output = np.vstack((["Filename", "DAB-positive area, pixels",
+                                           "Empty area, %", "DAB-positive area, %"], array_output))
+    # write array to csv file
+    output_csv_path = os.path.join(outputPath, "test.csv")
+    with open(output_csv_path, 'w') as f:
+        csv.writer(f).writerows(array_output)
+    print "CSV saved: " + output_csv_path
+
 
 # Declare the zero values and empty arrays
 count_cycle = 0
 arrayData = np.empty([0, 3])
 arrayFilenames = np.empty([0, 1])
 
-# Verbose options
+# Initialize the global timer
+startTimeGlobal = timeit.default_timer()
+
+args = parse_arguments()
+root = args.path
 boolProgress_show = args.silent
 
-# Custom calculated matrix of lab's stains DAB + Hematoxylin
-# Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
-# More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
-customDAB = np.array([[0.66504073, 0.61772484, 0.41968665],
-                      [0.4100872, 0.5751321, 0.70785],
-                      [0.6241389, 0.53632, 0.56816506]])
-# Alternative matrix DAB + Hematoxylin
-# customDAB = np.array([[0.34388107, 0.9115486, 0.22544378],
-#                       [0.14550355, 0.4053599, 0.90250325],
-#                       [0.92767155, 0.06901047, 0.3669646]])
+# Calc the matrix of stain
+matrix = calc_deconv_matrix()
 
-customDAB[2, :] = np.cross(customDAB[0, :], customDAB[1, :])
-customDAB_matrix = linalg.inv(customDAB)
-
-root = args.path
 # mkdir for output if not exist
-outputPath = root + "result/"
+outputPath = os.path.join(root, "result/")
 if not os.path.exists(outputPath):
     os.mkdir(outputPath)
     print "Created result directory"
@@ -134,7 +152,7 @@ for filename in sorted(filenames):
     ihc = Image.open(imagePath)
 
     # Separate the stains using the custom matrix
-    ihc_DH = color.separate_stains(ihc, customDAB_matrix)
+    ihc_DH = color.separate_stains(ihc, matrix)
     stainDAB = ihc_DH[:, :, 1]
     stainHematox = ihc_DH[:, :, 0]
 
@@ -177,7 +195,7 @@ for filename in sorted(filenames):
     # Loop for filling the list with file names and area results
     count_cycle += 1
     if count_cycle <= len(filenames):
-        arrayData = np.vstack ((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
+        arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
         arrayFilenames = np.vstack((arrayFilenames, filename))
 
         # Creating the summary image
