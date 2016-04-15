@@ -28,6 +28,8 @@ def parse_arguments():
 
 
 def get_image_filenames(path):
+    # Returnes only the filenames in the path. Directories, subdirectories and files below the first level
+    # are excluded
     return [name for name in sorted(os.listdir(path))
             if not os.path.isdir(os.path.join(path, name))]
 
@@ -39,11 +41,6 @@ def calc_deconv_matrix():
     custom_dab = np.array([[0.66504073, 0.61772484, 0.41968665],
                           [0.4100872, 0.5751321, 0.70785],
                           [0.6241389, 0.53632, 0.56816506]])
-    # Alternative matrix DAB + Hematoxylin
-    # custom_dab = np.array([[0.34388107, 0.9115486, 0.22544378],
-    #                       [0.14550355, 0.4053599, 0.90250325],
-    #                       [0.92767155, 0.06901047, 0.3669646]])
-
     custom_dab[2, :] = np.cross(custom_dab[0, :], custom_dab[1, :])
     custom_dab_matrix = linalg.inv(custom_dab)
     return custom_dab_matrix
@@ -51,6 +48,7 @@ def calc_deconv_matrix():
 
 def print_log(text_log, bool_log_new=False):
     # Write the log and show the text in console
+    # bool_log_new is used to erase the log file if it exists to avoid appending new data to the old one
     output_log_path = outputPath + "log.txt"
     if bool_log_new:
         print text_log
@@ -67,7 +65,30 @@ def print_log(text_log, bool_log_new=False):
             fileLog.write('\n')
 
 
-def plot_figure():
+def count_thresholds(stain_dab, channel_value):
+    # Counts thresholds. stain_dab is a distribution map of DAB stain, channel_value is a value channel from
+    # original image in HSV color space. The output are the thresholded images of DAB-positive areas and
+    # empty areas. thresh_default is also in output as plot_figure() needs it to make a vertical line of
+    # threshold on a histogram.
+    if args.thresh:
+        thresh_default = args.thresh
+    else:
+        thresh_default = 55
+    thresh_dab = stain_dab > thresh_default
+
+    if args.empty:
+        thresh_empty_default = args.empty
+    else:
+        thresh_empty_default = 92
+    thresh_empty = channel_value > thresh_empty_default
+    return thresh_dab, thresh_empty, thresh_default
+
+
+def plot_figure(thresh_default):
+    # Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
+    # Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
+    # work with histogram but only with ordinary plots. After all function fills the area between zero and
+    # plot if the values are above the threshold.
     plt.figure(num=None, figsize=(15, 7), dpi=120, facecolor='w', edgecolor='k')
     plt.subplot(231)
     plt.title('Original')
@@ -85,9 +106,9 @@ def plot_figure():
     # clearing subplot after getting the bins from hist
     plt.cla()
     plt.fill_between(bins_equal, n, 0, facecolor='#ffffff')
-    plt.fill_between(bins_equal, n, 0, where=bins_equal >= threshDefault,  facecolor='#c4c4f4',
+    plt.fill_between(bins_equal, n, 0, where=bins_equal >= thresh_default,  facecolor='#c4c4f4',
                      label='positive area')
-    plt.axvline(threshDefault+0.5, color='k', linestyle='--', label='threshold', alpha=0.8)
+    plt.axvline(thresh_default+0.5, color='k', linestyle='--', label='threshold', alpha=0.8)
     plt.legend(fontsize=8)
     plt.xlabel("Pixel intensity, %")
     plt.ylabel("Number of pixels")
@@ -95,21 +116,22 @@ def plot_figure():
 
     plt.subplot(234)
     plt.title('Value channel of original in HSV')
-    plt.imshow(ihc_v, cmap=plt.cm.gray)
+    plt.imshow(channelValue, cmap=plt.cm.gray)
 
     plt.subplot(235)
     plt.title('DAB positive area')
-    plt.imshow(threshDAB_pos, cmap=plt.cm.gray)
+    plt.imshow(threshDAB, cmap=plt.cm.gray)
 
     plt.subplot(236)
     plt.title('Empty area')
-    plt.imshow(threshIHC_v, cmap=plt.cm.gray)
+    plt.imshow(threshEmpty, cmap=plt.cm.gray)
 
     plt.tight_layout()
 
 
-def save_csv():
-    array_output = np.hstack((arrayFilenames, arrayData))
+def save_csv(array_filenames, array_data):
+    # Function formats the data from numpy array and puts it to the output csv file.
+    array_output = np.hstack((array_filenames, array_data))
     array_output = np.vstack((["Filename", "DAB-positive area, pixels",
                                            "Empty area, %", "DAB-positive area, %"], array_output))
     # write array to csv file
@@ -164,25 +186,16 @@ for filename in sorted(filenames):
 
     # Extracting Value channel from HSV of original image
     ihc_hcv = color.rgb2hsv(ihc)
-    ihc_v = (ihc_hcv[:, :, 2] * 100)
+    channelValue = (ihc_hcv[:, :, 2] * 100)
 
     # Binary non-adaptive threshold for DAB and empty areas
     # Default threshold is used when no -t option is available
-    if args.thresh:
-        threshDefault = args.thresh
-    else:
-        threshDefault = 55
-    threshDAB_pos = stainDAB > threshDefault
-    if args.empty:
-        threshEmptyDefault = args.empty
-    else:
-        threshEmptyDefault = 92
-    threshIHC_v = ihc_v > threshEmptyDefault
+    threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue)
 
     # Count areas from numpy arrays
-    areaAll = float(threshDAB_pos.size)
-    areaEmpty = float(np.count_nonzero(threshIHC_v))
-    areaDAB_pos = float(np.count_nonzero(threshDAB_pos))
+    areaAll = float(threshDAB.size)
+    areaEmpty = float(np.count_nonzero(threshEmpty))
+    areaDAB_pos = float(np.count_nonzero(threshDAB))
 
     # Count relative areas in % with rounding
     # NB! Relative DAB is counted without empty areas
@@ -199,7 +212,7 @@ for filename in sorted(filenames):
         arrayFilenames = np.vstack((arrayFilenames, filename))
 
         # Creating the summary image
-        plot_figure()
+        plot_figure(threshDefault)
 
         # In silent mode image would be closed immediately
         if not boolProgress_show:
@@ -211,7 +224,7 @@ for filename in sorted(filenames):
 
     # At the last cycle we're saving the summary csv
     if count_cycle == len(filenames):
-        save_csv()
+        save_csv(arrayFilenames, arrayData)
         break
 # End the global timer
 elapsedGlobal = timeit.default_timer() - startTimeGlobal
