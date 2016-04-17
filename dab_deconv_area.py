@@ -28,7 +28,7 @@ def parse_arguments():
 
 
 def get_image_filenames(path):
-    # Returnes only the filenames in the path. Directories, subdirectories and files below the first level
+    # Returns only the filenames in the path. Directories, subdirectories and files below the first level
     # are excluded
     return [name for name in sorted(os.listdir(path))
             if not os.path.isdir(os.path.join(path, name))]
@@ -46,21 +46,20 @@ def calc_deconv_matrix():
     return custom_dab_matrix
 
 
-def print_log(text_log, bool_log_new=False):
+def print_log(path_output_log, text_log, bool_log_new=False):
     # Write the log and show the text in console
     # bool_log_new is used to erase the log file if it exists to avoid appending new data to the old one
-    output_log_path = outputPath + "log.txt"
     if bool_log_new:
         print text_log
         # Initialize empty file
-        with open(output_log_path, "a") as fileLog:
+        with open(path_output_log, "a") as fileLog:
             fileLog.write("")
-        with open(output_log_path, "w") as fileLog:
+        with open(path_output_log, "w") as fileLog:
             fileLog.write(text_log)
             fileLog.write('\n')
     else:
         print text_log
-        with open(output_log_path, "a") as fileLog:
+        with open(path_output_log, "a") as fileLog:
             fileLog.write(text_log)
             fileLog.write('\n')
 
@@ -92,7 +91,7 @@ def plot_figure(thresh_default):
     plt.figure(num=None, figsize=(15, 7), dpi=120, facecolor='w', edgecolor='k')
     plt.subplot(231)
     plt.title('Original')
-    plt.imshow(ihc)
+    plt.imshow(imageOriginal)
 
     plt.subplot(232)
     plt.title('DAB')
@@ -129,17 +128,30 @@ def plot_figure(thresh_default):
     plt.tight_layout()
 
 
-def save_csv(array_filenames, array_data):
+def save_csv(path_output_csv, array_filenames, array_data):
     # Function formats the data from numpy array and puts it to the output csv file.
     array_output = np.hstack((array_filenames, array_data))
     array_output = np.vstack((["Filename", "DAB-positive area, pixels",
                                            "Empty area, %", "DAB-positive area, %"], array_output))
     # write array to csv file
-    output_csv_path = os.path.join(outputPath, "test.csv")
-    with open(output_csv_path, 'w') as f:
+    with open(path_output_csv, 'w') as f:
         csv.writer(f).writerows(array_output)
-    print "CSV saved: " + output_csv_path
+    print "CSV saved: " + path_output_csv
 
+
+def get_path(path_root):
+    path_output = os.path.join(path_root, "result/")
+    path_output_log = os.path.join(path_output, "log.txt")
+    path_output_csv = os.path.join(path_output, "analysis.csv")
+    return path_root, path_output, path_output_log, path_output_csv
+
+
+def check_output_path_exist(path_output):
+    if not os.path.exists(path_output):
+        os.mkdir(path_output)
+        print "Created result directory"
+    else:
+        print "Output result directory already exists. All the files inside would be overwritten!"
 
 # Declare the zero values and empty arrays
 count_cycle = 0
@@ -150,33 +162,25 @@ arrayFilenames = np.empty([0, 1])
 startTimeGlobal = timeit.default_timer()
 
 args = parse_arguments()
-root = args.path
+pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_path(args.path)
 boolProgress_show = args.silent
-
-# Calc the matrix of stain
 matrix = calc_deconv_matrix()
-
-# mkdir for output if not exist
-outputPath = os.path.join(root, "result/")
-if not os.path.exists(outputPath):
-    os.mkdir(outputPath)
-    print "Created result directory"
-else:
-    print "Output result directory already exists. All the files inside would be overwritten!"
+check_output_path_exist(pathOutput)
 
 # Recursive search through the path from argument
-filenames = get_image_filenames(root)
-print_log("Images for analysis: " + str(len(filenames)), True)
+filenames = get_image_filenames(args.path)
+print_log(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
 for filename in sorted(filenames):
-    imagePath = os.path.join(root, filename)
+    pathInputImage = os.path.join(pathRoot, filename)
+    pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
 
     # Image selection
-    ihc = Image.open(imagePath)
+    imageOriginal = Image.open(pathInputImage)
 
     # Separate the stains using the custom matrix
-    ihc_DH = color.separate_stains(ihc, matrix)
-    stainDAB = ihc_DH[:, :, 1]
-    stainHematox = ihc_DH[:, :, 0]
+    imageSeparated = color.separate_stains(imageOriginal, matrix)
+    stainDAB = imageSeparated[..., 1]
+    stainHematox = imageSeparated[..., 0]
 
     # 1-D array for histogram conversion, 1 added to move the original range from
     # [-1,0] to [0,1] as black and white respectively. Warning! Magic numbers.
@@ -185,8 +189,8 @@ for filename in sorted(filenames):
     stainDAB_1D = np.ravel(stainDAB)
 
     # Extracting Value channel from HSV of original image
-    ihc_hcv = color.rgb2hsv(ihc)
-    channelValue = (ihc_hcv[:, :, 2] * 100)
+    imageHSV = color.rgb2hsv(imageOriginal)
+    channelValue = (imageHSV[:, :, 2] * 100)
 
     # Binary non-adaptive threshold for DAB and empty areas
     # Default threshold is used when no -t option is available
@@ -217,19 +221,21 @@ for filename in sorted(filenames):
         # In silent mode image would be closed immediately
         if not boolProgress_show:
             plt.pause(5)
+
         # Save the plot
-        outputImagePath = outputPath + filename.split(".")[0] + "_analysis.png"
-        print_log("Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + outputImagePath)
-        plt.savefig(outputImagePath)
+
+        print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
+        plt.savefig(pathOutputImage)
 
     # At the last cycle we're saving the summary csv
     if count_cycle == len(filenames):
-        save_csv(arrayFilenames, arrayData)
+        save_csv(pathOutputCSV, arrayFilenames, arrayData)
         break
+
 # End the global timer
 elapsedGlobal = timeit.default_timer() - startTimeGlobal
 averageImageTime = elapsedGlobal/len(filenames)
 elapsedGlobal = "{:.1f}".format(elapsedGlobal)
 averageImageTime = "{:.1f}".format(averageImageTime)
-print_log("Analysis time: " + str(elapsedGlobal) + " seconds")
-print_log("Average time per image: " + str(averageImageTime) + " seconds")
+print_log(pathOutputLog, "Analysis time: " + str(elapsedGlobal) + " seconds")
+print_log(pathOutputLog, "Average time per image: " + str(averageImageTime) + " seconds")
