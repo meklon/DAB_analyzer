@@ -181,8 +181,8 @@ def check_output_path_exist(path_output):
 
 
 def resize_input_image(image_original):
-    size = 800, 600
-    image_original = image_original.resize((size), Image.NEAREST)
+    size = 640, 480
+    image_original = image_original.resize(size, Image.NEAREST)
     return image_original
 
 # Declare the zero values and empty arrays
