@@ -109,7 +109,7 @@ def count_areas(thresh_dab, thresh_empty):
     return area_dab_pos, area_rel_empty, area_rel_dab
 
 
-def plot_figure(thresh_default):
+def plot_figure(image_original, stain_dab, stain_dab_1d, channel_value, thresh_dab, thresh_empty, thresh_default):
     # Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
     # Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
     # work with histogram but only with ordinary plots. After all function fills the area between zero and
@@ -117,15 +117,15 @@ def plot_figure(thresh_default):
     plt.figure(num=None, figsize=(15, 7), dpi=120, facecolor='w', edgecolor='k')
     plt.subplot(231)
     plt.title('Original')
-    plt.imshow(imageOriginal)
+    plt.imshow(image_original)
 
     plt.subplot(232)
     plt.title('DAB')
-    plt.imshow(stainDAB, cmap=plt.cm.gray)
+    plt.imshow(stain_dab, cmap=plt.cm.gray)
 
     plt.subplot(233)
     plt.title('Histogram of DAB')
-    (n, bins, patches) = plt.hist(stainDAB_1D, bins=128, range=[0, 100], histtype='step', fc='k', ec='#ffffff')
+    (n, bins, patches) = plt.hist(stain_dab_1d, bins=128, range=[0, 100], histtype='step', fc='k', ec='#ffffff')
     # As np.size(bins) = np.size(n)+1, we make the arrays equal to plot the area after threshold
     bins_equal = np.delete(bins, np.size(bins)-1, axis=0)
     # clearing subplot after getting the bins from hist
@@ -141,15 +141,15 @@ def plot_figure(thresh_default):
 
     plt.subplot(234)
     plt.title('Value channel of original in HSV')
-    plt.imshow(channelValue, cmap=plt.cm.gray)
+    plt.imshow(channel_value, cmap=plt.cm.gray)
 
     plt.subplot(235)
     plt.title('DAB positive area')
-    plt.imshow(threshDAB, cmap=plt.cm.gray)
+    plt.imshow(thresh_dab, cmap=plt.cm.gray)
 
     plt.subplot(236)
     plt.title('Empty area')
-    plt.imshow(threshEmpty, cmap=plt.cm.gray)
+    plt.imshow(thresh_empty, cmap=plt.cm.gray)
 
     plt.tight_layout()
 
@@ -172,7 +172,7 @@ def get_path(path_root):
     return path_root, path_output, path_output_log, path_output_csv
 
 
-def check_output_path_exist(path_output):
+def check_mkdir_output_path(path_output):
     if not os.path.exists(path_output):
         os.mkdir(path_output)
         print "Created result directory"
@@ -181,6 +181,8 @@ def check_output_path_exist(path_output):
 
 
 def resize_input_image(image_original):
+    # Resizing the original images makes the slowest functions calc_deconv_matrix() and color.rgb2hsv()
+    # work much faster. No visual troubles or negative effects to the accuracy.
     size = 640, 480
     image_original = image_original.resize(size, Image.NEAREST)
     return image_original
@@ -197,7 +199,7 @@ args = parse_arguments()
 pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_path(args.path)
 boolSilent = args.silent
 matrix = calc_deconv_matrix()
-check_output_path_exist(pathOutput)
+check_mkdir_output_path(pathOutput)
 
 # Recursive search through the path from argument
 filenames = get_image_filenames(args.path)
@@ -222,7 +224,7 @@ for filename in sorted(filenames):
         arrayFilenames = np.vstack((arrayFilenames, filename))
 
         # Creating the summary image
-        plot_figure(threshDefault)
+        plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelValue, threshDAB, threshEmpty, threshDefault)
         plt.savefig(pathOutputImage)
 
         print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
