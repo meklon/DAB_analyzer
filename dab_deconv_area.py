@@ -14,10 +14,10 @@ def parse_arguments():
     # Parsing arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
-    parser.add_argument("-t", "--thresh", required=False, type=int, help="Global threshold for DAB-positive area,"
+    parser.add_argument("-t", "--thresh", required=False, default=55, type=int, help="Global threshold for DAB-positive area,"
                                                                          "from 0 to 100.Optimal values are usually"
                                                                          " located from 40 to 65.")
-    parser.add_argument("-e", "--empty", required=False, type=int, help="Global threshold for EMPTY area,"
+    parser.add_argument("-e", "--empty", required=False, default= 92, type=int, help="Global threshold for EMPTY area,"
                                                                         "from 0 to 100.Optimal values are usually"
                                                                         " located from 88 to 95.")
     parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
@@ -69,16 +69,10 @@ def count_thresholds(stain_dab, channel_value):
     # original image in HSV color space. The output are the thresholded images of DAB-positive areas and
     # empty areas. thresh_default is also in output as plot_figure() needs it to make a vertical line of
     # threshold on a histogram.
-    if args.thresh:
-        thresh_default = args.thresh
-    else:
-        thresh_default = 55
-    thresh_dab = stain_dab > thresh_default
 
-    if args.empty:
-        thresh_empty_default = args.empty
-    else:
-        thresh_empty_default = 92
+    thresh_default = args.thresh
+    thresh_empty_default = args.empty
+    thresh_dab = stain_dab > thresh_default
     thresh_empty = channel_value > thresh_empty_default
     return thresh_dab, thresh_empty, thresh_default
 
