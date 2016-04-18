@@ -46,6 +46,25 @@ def calc_deconv_matrix():
     return custom_dab_matrix
 
 
+def separate_channels(image_original, matrix_dh):
+    # Separate the stains using the custom matrix
+    image_separated = color.separate_stains(image_original, matrix_dh)
+    stain_dab = image_separated[..., 1]
+    # stainHematox = image_separated[..., 0]
+
+    # 1-D array for histogram conversion, 1 added to move the original range from
+    # [-1,0] to [0,1] as black and white respectively. Warning! Magic numbers.
+    # Anyway it's not a trouble for correct thresholding. Only for histogram aspect.
+    stain_dab = (stain_dab + 1) * 200
+    stain_dab_1d = np.ravel(stain_dab)
+
+    # Extracting Value channel from HSV of original image
+    image_hsv = color.rgb2hsv(image_original)
+    channel_value = (image_hsv[..., 2] * 100)
+
+    return stain_dab, stain_dab_1d, channel_value
+
+
 def print_log(path_output_log, text_log, bool_log_new=False):
     # Write the log and show the text in console
     # bool_log_new is used to erase the log file if it exists to avoid appending new data to the old one
@@ -76,6 +95,18 @@ def count_thresholds(stain_dab, channel_value):
     thresh_empty = channel_value > thresh_empty_default
     return thresh_dab, thresh_empty, thresh_default
 
+
+def count_areas(thresh_dab, thresh_empty):
+    # Count areas from numpy arrays
+    area_all = float(thresh_dab.size)
+    area_empty = float(np.count_nonzero(thresh_empty))
+    area_dab_pos = float(np.count_nonzero(thresh_dab))
+
+    # Count relative areas in % with rounding
+    # NB! Relative DAB is counted without empty areas
+    area_rel_empty = round((area_empty / area_all * 100), 2)
+    area_rel_dab = round((area_dab_pos / (area_all - area_empty) * 100), 2)
+    return area_dab_pos, area_rel_empty, area_rel_dab
 
 def plot_figure(thresh_default):
     # Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
@@ -157,7 +188,7 @@ startTimeGlobal = timeit.default_timer()
 
 args = parse_arguments()
 pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_path(args.path)
-boolProgress_show = args.silent
+boolSilent = args.silent
 matrix = calc_deconv_matrix()
 check_output_path_exist(pathOutput)
 
@@ -172,33 +203,10 @@ for filename in sorted(filenames):
     imageOriginal = Image.open(pathInputImage)
 
     # Separate the stains using the custom matrix
-    imageSeparated = color.separate_stains(imageOriginal, matrix)
-    stainDAB = imageSeparated[..., 1]
-    stainHematox = imageSeparated[..., 0]
+    stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrix)
 
-    # 1-D array for histogram conversion, 1 added to move the original range from
-    # [-1,0] to [0,1] as black and white respectively. Warning! Magic numbers.
-    # Anyway it's not a trouble for correct thresholding. Only for histogram aspect.
-    stainDAB = (stainDAB + 1) * 200
-    stainDAB_1D = np.ravel(stainDAB)
-
-    # Extracting Value channel from HSV of original image
-    imageHSV = color.rgb2hsv(imageOriginal)
-    channelValue = (imageHSV[:, :, 2] * 100)
-
-    # Binary non-adaptive threshold for DAB and empty areas
-    # Default threshold is used when no -t option is available
     threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue)
-
-    # Count areas from numpy arrays
-    areaAll = float(threshDAB.size)
-    areaEmpty = float(np.count_nonzero(threshEmpty))
-    areaDAB_pos = float(np.count_nonzero(threshDAB))
-
-    # Count relative areas in % with rounding
-    # NB! Relative DAB is counted without empty areas
-    areaRelEmpty = round((areaEmpty / areaAll * 100), 2)
-    areaRelDAB = round((areaDAB_pos / (areaAll - areaEmpty) * 100), 2)
+    areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
 
     # Close all figures after cycle end
     plt.close('all')
@@ -213,11 +221,11 @@ for filename in sorted(filenames):
         plot_figure(threshDefault)
 
         # In silent mode image would be closed immediately
-        if not boolProgress_show:
-            plt.pause(5)
+        if not boolSilent:
+            varPause = 5
+            plt.pause(varPause)
 
         # Save the plot
-
         print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
         plt.savefig(pathOutputImage)
 
@@ -228,8 +236,9 @@ for filename in sorted(filenames):
 
 # End the global timer
 elapsedGlobal = timeit.default_timer() - startTimeGlobal
-averageImageTime = elapsedGlobal/len(filenames)
-elapsedGlobal = "{:.1f}".format(elapsedGlobal)
-averageImageTime = "{:.1f}".format(averageImageTime)
-print_log(pathOutputLog, "Analysis time: " + str(elapsedGlobal) + " seconds")
-print_log(pathOutputLog, "Average time per image: " + str(averageImageTime) + " seconds")
+if not boolSilent:
+    averageImageTime = (elapsedGlobal- len(filenames)*varPause)/len(filenames)  #compensate the pause
+else:
+    averageImageTime = elapsedGlobal/len(filenames)
+print_log(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
+print_log(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
