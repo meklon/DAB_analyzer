@@ -14,12 +14,14 @@ def parse_arguments():
     # Parsing arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
-    parser.add_argument("-t", "--thresh", required=False, default=55, type=int, help="Global threshold for DAB-positive area,"
-                                                                         "from 0 to 100.Optimal values are usually"
-                                                                         " located from 40 to 65.")
-    parser.add_argument("-e", "--empty", required=False, default= 92, type=int, help="Global threshold for EMPTY area,"
-                                                                        "from 0 to 100.Optimal values are usually"
-                                                                        " located from 88 to 95.")
+    parser.add_argument("-t", "--thresh", required=False, default=55,
+                        type=int, help="Global threshold for DAB-positive area,"
+                                       "from 0 to 100.Optimal values are usually"
+                                       " located from 40 to 65.")
+    parser.add_argument("-e", "--empty", required=False, default=92,
+                        type=int, help="Global threshold for EMPTY area,"
+                                       "from 0 to 100.Optimal values are usually"
+                                       " located from 88 to 95.")
     parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
                                                                " only the final results"
                                                                " would be saved", action="store_true")
@@ -34,16 +36,12 @@ def get_image_filenames(path):
             if not os.path.isdir(os.path.join(path, name))]
 
 
-def calc_deconv_matrix():
+def calc_deconv_matrix(matrix_raw_dh):
     # Custom calculated matrix of lab's stains DAB + Hematoxylin
-    # Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
-    # More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
-    custom_dab = np.array([[0.66504073, 0.61772484, 0.41968665],
-                          [0.4100872, 0.5751321, 0.70785],
-                          [0.6241389, 0.53632, 0.56816506]])
-    custom_dab[2, :] = np.cross(custom_dab[0, :], custom_dab[1, :])
-    custom_dab_matrix = linalg.inv(custom_dab)
-    return custom_dab_matrix
+
+    matrix_raw_dh[2, :] = np.cross(matrix_raw_dh[0, :], matrix_raw_dh[1, :])
+    matrix_dh = linalg.inv(matrix_raw_dh)
+    return matrix_dh
 
 
 def separate_channels(image_original, matrix_dh):
@@ -165,7 +163,8 @@ def save_csv(path_output_csv, array_filenames, array_data):
     print "CSV saved: " + path_output_csv
 
 
-def get_path(path_root):
+def get_output_paths(path_root):
+    # Output path generating
     path_output = os.path.join(path_root, "result/")
     path_output_log = os.path.join(path_output, "log.txt")
     path_output_csv = os.path.join(path_output, "analysis.csv")
@@ -173,6 +172,7 @@ def get_path(path_root):
 
 
 def check_mkdir_output_path(path_output):
+    # Function checks if the output path exists and creates it if not
     if not os.path.exists(path_output):
         os.mkdir(path_output)
         print "Created result directory"
@@ -187,6 +187,13 @@ def resize_input_image(image_original):
     image_original = image_original.resize(size, Image.NEAREST)
     return image_original
 
+# Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
+# More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
+# Declare the matrix as a constant
+matrixRawDH = np.array([[0.66504073, 0.61772484, 0.41968665],
+                        [0.4100872, 0.5751321, 0.70785],
+                        [0.6241389, 0.53632, 0.56816506]])
+
 # Declare the zero values and empty arrays
 count_cycle = 0
 arrayData = np.empty([0, 3])
@@ -196,9 +203,9 @@ arrayFilenames = np.empty([0, 1])
 startTimeGlobal = timeit.default_timer()
 
 args = parse_arguments()
-pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_path(args.path)
+pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
 boolSilent = args.silent
-matrix = calc_deconv_matrix()
+matrixDH = calc_deconv_matrix(matrixRawDH)
 check_mkdir_output_path(pathOutput)
 
 # Recursive search through the path from argument
@@ -210,7 +217,7 @@ for filename in sorted(filenames):
     imageOriginal = Image.open(pathInputImage)
     imageOriginal = resize_input_image(imageOriginal)
 
-    stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrix)
+    stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrixDH)
     threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue)
     areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
 
@@ -242,7 +249,7 @@ for filename in sorted(filenames):
 # End the global timer
 elapsedGlobal = timeit.default_timer() - startTimeGlobal
 if not boolSilent:
-    averageImageTime = (elapsedGlobal- len(filenames)*varPause)/len(filenames)  #compensate the pause
+    averageImageTime = (elapsedGlobal - len(filenames)*varPause)/len(filenames)  # compensate the pause
 else:
     averageImageTime = elapsedGlobal/len(filenames)
 print_log(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
