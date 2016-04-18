@@ -81,14 +81,11 @@ def print_log(path_output_log, text_log, bool_log_new=False):
             fileLog.write('\n')
 
 
-def count_thresholds(stain_dab, channel_value):
+def count_thresholds(stain_dab, channel_value, thresh_default, thresh_empty_default):
     # Counts thresholds. stain_dab is a distribution map of DAB stain, channel_value is a value channel from
     # original image in HSV color space. The output are the thresholded images of DAB-positive areas and
     # empty areas. thresh_default is also in output as plot_figure() needs it to make a vertical line of
     # threshold on a histogram.
-
-    thresh_default = args.thresh
-    thresh_empty_default = args.empty
     thresh_dab = stain_dab > thresh_default
     thresh_empty = channel_value > thresh_empty_default
     return thresh_dab, thresh_empty, thresh_default
@@ -194,63 +191,68 @@ matrixRawDH = np.array([[0.66504073, 0.61772484, 0.41968665],
                         [0.4100872, 0.5751321, 0.70785],
                         [0.6241389, 0.53632, 0.56816506]])
 
-# Declare the zero values and empty arrays
-count_cycle = 0
-arrayData = np.empty([0, 3])
-arrayFilenames = np.empty([0, 1])
 
-# Initialize the global timer
-startTimeGlobal = timeit.default_timer()
+def main():
+    # Declare the zero values and empty arrays
+    count_cycle = 0
+    arrayData = np.empty([0, 3])
+    arrayFilenames = np.empty([0, 1])
 
-args = parse_arguments()
-pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
-boolSilent = args.silent
-matrixDH = calc_deconv_matrix(matrixRawDH)
-check_mkdir_output_path(pathOutput)
+    # Initialize the global timer
+    startTimeGlobal = timeit.default_timer()
 
-# Recursive search through the path from argument
-filenames = get_image_filenames(args.path)
-print_log(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
-for filename in sorted(filenames):
-    pathInputImage = os.path.join(pathRoot, filename)
-    pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
-    imageOriginal = Image.open(pathInputImage)
-    imageOriginal = resize_input_image(imageOriginal)
+    args = parse_arguments()
+    pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
+    boolSilent = args.silent
+    matrixDH = calc_deconv_matrix(matrixRawDH)
+    check_mkdir_output_path(pathOutput)
 
-    stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrixDH)
-    threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue)
-    areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
+    # Recursive search through the path from argument
+    filenames = get_image_filenames(args.path)
+    print_log(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
+    for filename in sorted(filenames):
+        pathInputImage = os.path.join(pathRoot, filename)
+        pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
+        imageOriginal = Image.open(pathInputImage)
+        imageOriginal = resize_input_image(imageOriginal)
 
-    # Close all figures after cycle end
-    plt.close('all')
+        stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrixDH)
+        threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue, args.thresh, args.empty)
+        areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
 
-    # Loop for filling the list with file names and area results
-    count_cycle += 1
-    if count_cycle <= len(filenames):
-        arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
-        arrayFilenames = np.vstack((arrayFilenames, filename))
+        # Close all figures after cycle end
+        plt.close('all')
 
-        # Creating the summary image
-        plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelValue, threshDAB, threshEmpty, threshDefault)
-        plt.savefig(pathOutputImage)
+        # Loop for filling the list with file names and area results
+        count_cycle += 1
+        if count_cycle <= len(filenames):
+            arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
+            arrayFilenames = np.vstack((arrayFilenames, filename))
 
-        print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
+            # Creating the summary image
+            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelValue, threshDAB, threshEmpty, threshDefault)
+            plt.savefig(pathOutputImage)
 
-        # In silent mode image would be closed immediately
-        if not boolSilent:
-            varPause = 5
-            plt.pause(varPause)
+            print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
 
-    # At the last cycle we're saving the summary csv
-    if count_cycle == len(filenames):
-        save_csv(pathOutputCSV, arrayFilenames, arrayData)
-        break
+            # In silent mode image would be closed immediately
+            if not boolSilent:
+                varPause = 5
+                plt.pause(varPause)
 
-# End the global timer
-elapsedGlobal = timeit.default_timer() - startTimeGlobal
-if not boolSilent:
-    averageImageTime = (elapsedGlobal - len(filenames)*varPause)/len(filenames)  # compensate the pause
-else:
-    averageImageTime = elapsedGlobal/len(filenames)
-print_log(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
-print_log(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
+        # At the last cycle we're saving the summary csv
+        if count_cycle == len(filenames):
+            save_csv(pathOutputCSV, arrayFilenames, arrayData)
+            break
+
+    # End the global timer
+    elapsedGlobal = timeit.default_timer() - startTimeGlobal
+    if not boolSilent:
+        averageImageTime = (elapsedGlobal - len(filenames)*varPause)/len(filenames)  # compensate the pause
+    else:
+        averageImageTime = elapsedGlobal/len(filenames)
+    print_log(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
+    print_log(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
+
+if __name__ == '__main__':
+    main()
