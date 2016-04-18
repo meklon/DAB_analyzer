@@ -179,6 +179,12 @@ def check_output_path_exist(path_output):
     else:
         print "Output result directory already exists. All the files inside would be overwritten!"
 
+
+def resize_input_image(image_original):
+    size = 800, 600
+    image_original = image_original.resize((size), Image.NEAREST)
+    return image_original
+
 # Declare the zero values and empty arrays
 count_cycle = 0
 arrayData = np.empty([0, 3])
@@ -200,6 +206,7 @@ for filename in sorted(filenames):
     pathInputImage = os.path.join(pathRoot, filename)
     pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
     imageOriginal = Image.open(pathInputImage)
+    imageOriginal = resize_input_image(imageOriginal)
 
     stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrix)
     threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue)
