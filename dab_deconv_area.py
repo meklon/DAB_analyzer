@@ -38,7 +38,7 @@ def get_image_filenames(path):
 
 def calc_deconv_matrix(matrix_raw_dh):
     # Custom calculated matrix of lab's stains DAB + Hematoxylin
-
+    # The raw matrix was moved to the global scope before main() function as a constant
     matrix_raw_dh[2, :] = np.cross(matrix_raw_dh[0, :], matrix_raw_dh[1, :])
     matrix_dh = linalg.inv(matrix_raw_dh)
     return matrix_dh
@@ -203,7 +203,6 @@ def main():
 
     args = parse_arguments()
     pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
-    boolSilent = args.silent
     matrixDH = calc_deconv_matrix(matrixRawDH)
     check_mkdir_output_path(pathOutput)
 
@@ -233,10 +232,10 @@ def main():
             plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelValue, threshDAB, threshEmpty, threshDefault)
             plt.savefig(pathOutputImage)
 
-            print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
+            print_log(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
 
             # In silent mode image would be closed immediately
-            if not boolSilent:
+            if not args.silent:
                 varPause = 5
                 plt.pause(varPause)
 
@@ -247,7 +246,7 @@ def main():
 
     # End the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
-    if not boolSilent:
+    if not args.silent:
         averageImageTime = (elapsedGlobal - len(filenames)*varPause)/len(filenames)  # compensate the pause
     else:
         averageImageTime = elapsedGlobal/len(filenames)
