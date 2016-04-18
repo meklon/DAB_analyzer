@@ -108,6 +108,7 @@ def count_areas(thresh_dab, thresh_empty):
     area_rel_dab = round((area_dab_pos / (area_all - area_empty) * 100), 2)
     return area_dab_pos, area_rel_empty, area_rel_dab
 
+
 def plot_figure(thresh_default):
     # Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
     # Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
@@ -198,13 +199,9 @@ print_log(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
 for filename in sorted(filenames):
     pathInputImage = os.path.join(pathRoot, filename)
     pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
-
-    # Image selection
     imageOriginal = Image.open(pathInputImage)
 
-    # Separate the stains using the custom matrix
     stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrix)
-
     threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue)
     areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
 
@@ -219,15 +216,14 @@ for filename in sorted(filenames):
 
         # Creating the summary image
         plot_figure(threshDefault)
+        plt.savefig(pathOutputImage)
+
+        print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
 
         # In silent mode image would be closed immediately
         if not boolSilent:
             varPause = 5
             plt.pause(varPause)
-
-        # Save the plot
-        print_log(pathOutputLog, "Image " + str(count_cycle) + "/" + str(len(filenames)) + " saved: " + pathOutputImage)
-        plt.savefig(pathOutputImage)
 
     # At the last cycle we're saving the summary csv
     if count_cycle == len(filenames):
