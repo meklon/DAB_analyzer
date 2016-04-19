@@ -42,14 +42,14 @@ def get_image_filenames(path):
             if not os.path.isdir(os.path.join(path, name))]
 
 
-def calc_deconv_matrix(matrix_raw_dh):
+def calc_deconv_matrix(matrix_vector_dab_he):
     """
     Custom calculated matrix of lab's stains DAB + Hematoxylin
     The raw matrix was moved to the global scope before main() function as a constant
     """
 
-    matrix_raw_dh[2, :] = np.cross(matrix_raw_dh[0, :], matrix_raw_dh[1, :])
-    matrix_dh = linalg.inv(matrix_raw_dh)
+    matrix_vector_dab_he[2, :] = np.cross(matrix_vector_dab_he[0, :], matrix_vector_dab_he[1, :])
+    matrix_dh = linalg.inv(matrix_vector_dab_he)
     return matrix_dh
 
 
@@ -222,9 +222,9 @@ def resize_input_image(image_original):
 # Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
 # More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
 # Declare the matrix as a constant
-matrixRawDH = np.array([[0.66504073, 0.61772484, 0.41968665],
-                        [0.4100872, 0.5751321, 0.70785],
-                        [0.6241389, 0.53632, 0.56816506]])
+matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
+                              [0.4100872, 0.5751321, 0.70785],
+                              [0.6241389, 0.53632, 0.56816506]])
 
 
 def main():
@@ -238,7 +238,7 @@ def main():
 
     args = parse_arguments()
     pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
-    matrixDH = calc_deconv_matrix(matrixRawDH)
+    matrixDH = calc_deconv_matrix(matrixVectorDabHE)
     check_mkdir_output_path(pathOutput)
 
     # Recursive search through the path from argument
