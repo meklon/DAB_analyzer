@@ -13,8 +13,6 @@ import matplotlib.pyplot as plt
 def parse_arguments():
     """
     Parsing arguments
-    :return:arguments
-    :rtype:argparse.Namespace
     """
 
     parser = argparse.ArgumentParser()
@@ -38,10 +36,6 @@ def get_image_filenames(path):
     """
     Returns only the filenames in the path. Directories, subdirectories and files below the first level
     are excluded
-    :param path:
-    :type path:
-    :return:
-    :rtype:
     """
 
     return [name for name in sorted(os.listdir(path))
@@ -52,10 +46,6 @@ def calc_deconv_matrix(matrix_raw_dh):
     """
     Custom calculated matrix of lab's stains DAB + Hematoxylin
     The raw matrix was moved to the global scope before main() function as a constant
-    :param matrix_raw_dh:
-    :type matrix_raw_dh:
-    :return matrix_dh:
-    :rtype: np.ndarray
     """
 
     matrix_raw_dh[2, :] = np.cross(matrix_raw_dh[0, :], matrix_raw_dh[1, :])
@@ -66,12 +56,6 @@ def calc_deconv_matrix(matrix_raw_dh):
 def separate_channels(image_original, matrix_dh):
     """
     Separate the stains using the custom matrix
-    :param image_original:
-    :type image_original:
-    :param matrix_dh:
-    :type matrix_dh:
-    :return:
-    :rtype:
     """
 
     image_separated = color.separate_stains(image_original, matrix_dh)
@@ -95,14 +79,6 @@ def print_log(path_output_log, text_log, bool_log_new=False):
     """
     Write the log and show the text in console
     bool_log_new is used to erase the log file if it exists to avoid appending new data to the old one
-    :param path_output_log:
-    :type path_output_log:
-    :param text_log:
-    :type text_log:
-    :param bool_log_new:
-    :type bool_log_new:
-    :return:
-    :rtype:
     """
 
     if bool_log_new:
@@ -126,16 +102,6 @@ def count_thresholds(stain_dab, channel_value, thresh_default, thresh_empty_defa
     original image in HSV color space. The output are the thresholded images of DAB-positive areas and
     empty areas. thresh_default is also in output as plot_figure() needs it to make a vertical line of
     threshold on a histogram.
-    :param stain_dab:
-    :type stain_dab:
-    :param channel_value:
-    :type channel_value:
-    :param thresh_default:
-    :type thresh_default:
-    :param thresh_empty_default:
-    :type thresh_empty_default:
-    :return:
-    :rtype:
     """
 
     thresh_dab = stain_dab > thresh_default
@@ -146,12 +112,6 @@ def count_thresholds(stain_dab, channel_value, thresh_default, thresh_empty_defa
 def count_areas(thresh_dab, thresh_empty):
     """
     Count areas from numpy arrays
-    :param thresh_dab:
-    :type thresh_dab:
-    :param thresh_empty:
-    :type thresh_empty:
-    :return:
-    :rtype:
     """
 
     area_all = float(thresh_dab.size)
@@ -171,22 +131,6 @@ def plot_figure(image_original, stain_dab, stain_dab_1d, channel_value, thresh_d
     Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
     work with histogram but only with ordinary plots. After all function fills the area between zero and
     plot if the values are above the threshold.
-    :param image_original:
-    :type image_original:
-    :param stain_dab:
-    :type stain_dab:
-    :param stain_dab_1d:
-    :type stain_dab_1d:
-    :param channel_value:
-    :type channel_value:
-    :param thresh_dab:
-    :type thresh_dab:
-    :param thresh_empty:
-    :type thresh_empty:
-    :param thresh_default:
-    :type thresh_default:
-    :return:None
-    :rtype:None
     """
     plt.figure(num=None, figsize=(15, 7), dpi=120, facecolor='w', edgecolor='k')
     plt.subplot(231)
@@ -231,14 +175,6 @@ def plot_figure(image_original, stain_dab, stain_dab_1d, channel_value, thresh_d
 def save_csv(path_output_csv, array_filenames, array_data):
     """
     Function formats the data from numpy array and puts it to the output csv file.
-    :param path_output_csv:
-    :type path_output_csv:
-    :param array_filenames:
-    :type array_filenames:
-    :param array_data:
-    :type array_data:
-    :return:None
-    :rtype:None
     """
 
     array_output = np.hstack((array_filenames, array_data))
@@ -253,10 +189,6 @@ def save_csv(path_output_csv, array_filenames, array_data):
 def get_output_paths(path_root):
     """
     Output path generating
-    :param path_root:
-    :type path_root:
-    :return:
-    :rtype:
     """
 
     path_output = os.path.join(path_root, "result/")
@@ -268,10 +200,6 @@ def get_output_paths(path_root):
 def check_mkdir_output_path(path_output):
     """
     Function checks if the output path exists and creates it if not
-    :param path_output:
-    :type path_output:
-    :return:
-    :rtype:
     """
 
     if not os.path.exists(path_output):
@@ -285,10 +213,6 @@ def resize_input_image(image_original):
     """
     Resizing the original images makes the slowest functions calc_deconv_matrix() and color.rgb2hsv()
     work much faster. No visual troubles or negative effects to the accuracy.
-    :param image_original:
-    :type image_original:
-    :return:
-    :rtype:
     """
 
     size = 640, 480
