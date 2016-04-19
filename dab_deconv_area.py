@@ -88,7 +88,7 @@ def count_thresholds(stain_dab, channel_value, thresh_default, thresh_empty_defa
     # threshold on a histogram.
     thresh_dab = stain_dab > thresh_default
     thresh_empty = channel_value > thresh_empty_default
-    return thresh_dab, thresh_empty, thresh_default
+    return thresh_dab, thresh_empty
 
 
 def count_areas(thresh_dab, thresh_empty):
@@ -165,7 +165,7 @@ def get_output_paths(path_root):
     path_output = os.path.join(path_root, "result/")
     path_output_log = os.path.join(path_output, "log.txt")
     path_output_csv = os.path.join(path_output, "analysis.csv")
-    return path_root, path_output, path_output_log, path_output_csv
+    return path_output, path_output_log, path_output_csv
 
 
 def check_mkdir_output_path(path_output):
@@ -202,7 +202,7 @@ def main():
     startTimeGlobal = timeit.default_timer()
 
     args = parse_arguments()
-    pathRoot, pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
+    pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
     matrixDH = calc_deconv_matrix(matrixRawDH)
     check_mkdir_output_path(pathOutput)
 
@@ -210,13 +210,13 @@ def main():
     filenames = get_image_filenames(args.path)
     print_log(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
     for filename in sorted(filenames):
-        pathInputImage = os.path.join(pathRoot, filename)
+        pathInputImage = os.path.join(args.path, filename)
         pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
         imageOriginal = Image.open(pathInputImage)
         imageOriginal = resize_input_image(imageOriginal)
 
         stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrixDH)
-        threshDAB, threshEmpty, threshDefault = count_thresholds(stainDAB, channelValue, args.thresh, args.empty)
+        threshDAB, threshEmpty = count_thresholds(stainDAB, channelValue, args.thresh, args.empty)
         areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
 
         # Close all figures after cycle end
@@ -229,7 +229,7 @@ def main():
             arrayFilenames = np.vstack((arrayFilenames, filename))
 
             # Creating the summary image
-            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelValue, threshDAB, threshEmpty, threshDefault)
+            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelValue, threshDAB, threshEmpty, args.thresh)
             plt.savefig(pathOutputImage)
 
             print_log(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
@@ -252,6 +252,7 @@ def main():
         averageImageTime = elapsedGlobal/len(filenames)
     print_log(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
     print_log(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
+
 
 if __name__ == '__main__':
     main()
