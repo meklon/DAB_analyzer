@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 
 
 def parse_arguments():
-    # Parsing arguments
+    """
+    Parsing arguments
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
     parser.add_argument("-t", "--thresh", required=False, default=55,
@@ -30,22 +32,28 @@ def parse_arguments():
 
 
 def get_image_filenames(path):
-    # Returns only the filenames in the path. Directories, subdirectories and files below the first level
-    # are excluded
+    """
+    Returns only the filenames in the path. Directories, subdirectories and files below the first level
+    are excluded
+    """
     return [name for name in sorted(os.listdir(path))
             if not os.path.isdir(os.path.join(path, name))]
 
 
 def calc_deconv_matrix(matrix_raw_dh):
-    # Custom calculated matrix of lab's stains DAB + Hematoxylin
-    # The raw matrix was moved to the global scope before main() function as a constant
+    """
+    Custom calculated matrix of lab's stains DAB + Hematoxylin
+    The raw matrix was moved to the global scope before main() function as a constant
+    """
     matrix_raw_dh[2, :] = np.cross(matrix_raw_dh[0, :], matrix_raw_dh[1, :])
     matrix_dh = linalg.inv(matrix_raw_dh)
     return matrix_dh
 
 
 def separate_channels(image_original, matrix_dh):
-    # Separate the stains using the custom matrix
+    """
+    Separate the stains using the custom matrix
+    """
     image_separated = color.separate_stains(image_original, matrix_dh)
     stain_dab = image_separated[..., 1]
     # stainHematox = image_separated[..., 0]
@@ -64,8 +72,10 @@ def separate_channels(image_original, matrix_dh):
 
 
 def print_log(path_output_log, text_log, bool_log_new=False):
-    # Write the log and show the text in console
-    # bool_log_new is used to erase the log file if it exists to avoid appending new data to the old one
+    """
+    Write the log and show the text in console
+    bool_log_new is used to erase the log file if it exists to avoid appending new data to the old one
+    """
     if bool_log_new:
         print text_log
         # Initialize empty file
@@ -82,17 +92,21 @@ def print_log(path_output_log, text_log, bool_log_new=False):
 
 
 def count_thresholds(stain_dab, channel_value, thresh_default, thresh_empty_default):
-    # Counts thresholds. stain_dab is a distribution map of DAB stain, channel_value is a value channel from
-    # original image in HSV color space. The output are the thresholded images of DAB-positive areas and
-    # empty areas. thresh_default is also in output as plot_figure() needs it to make a vertical line of
-    # threshold on a histogram.
+    """
+    Counts thresholds. stain_dab is a distribution map of DAB stain, channel_value is a value channel from
+    original image in HSV color space. The output are the thresholded images of DAB-positive areas and
+    empty areas. thresh_default is also in output as plot_figure() needs it to make a vertical line of
+    threshold on a histogram.
+    """
     thresh_dab = stain_dab > thresh_default
     thresh_empty = channel_value > thresh_empty_default
     return thresh_dab, thresh_empty
 
 
 def count_areas(thresh_dab, thresh_empty):
-    # Count areas from numpy arrays
+    """
+    Count areas from numpy arrays
+    """
     area_all = float(thresh_dab.size)
     area_empty = float(np.count_nonzero(thresh_empty))
     area_dab_pos = float(np.count_nonzero(thresh_dab))
@@ -105,10 +119,15 @@ def count_areas(thresh_dab, thresh_empty):
 
 
 def plot_figure(image_original, stain_dab, stain_dab_1d, channel_value, thresh_dab, thresh_empty, thresh_default):
-    # Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
-    # Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
-    # work with histogram but only with ordinary plots. After all function fills the area between zero and
-    # plot if the values are above the threshold.
+    """
+    Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
+    Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
+    work with histogram but only with ordinary plots. After all function fills the area between zero and
+    plot if the values are above the threshold.
+    """
+
+
+
     plt.figure(num=None, figsize=(15, 7), dpi=120, facecolor='w', edgecolor='k')
     plt.subplot(231)
     plt.title('Original')
@@ -150,7 +169,9 @@ def plot_figure(image_original, stain_dab, stain_dab_1d, channel_value, thresh_d
 
 
 def save_csv(path_output_csv, array_filenames, array_data):
-    # Function formats the data from numpy array and puts it to the output csv file.
+    """
+    Function formats the data from numpy array and puts it to the output csv file.
+    """
     array_output = np.hstack((array_filenames, array_data))
     array_output = np.vstack((["Filename", "DAB-positive area, pixels",
                                            "Empty area, %", "DAB-positive area, %"], array_output))
@@ -161,7 +182,9 @@ def save_csv(path_output_csv, array_filenames, array_data):
 
 
 def get_output_paths(path_root):
-    # Output path generating
+    """
+    Output path generating
+    """
     path_output = os.path.join(path_root, "result/")
     path_output_log = os.path.join(path_output, "log.txt")
     path_output_csv = os.path.join(path_output, "analysis.csv")
@@ -169,7 +192,9 @@ def get_output_paths(path_root):
 
 
 def check_mkdir_output_path(path_output):
-    # Function checks if the output path exists and creates it if not
+    """
+    Function checks if the output path exists and creates it if not
+    """
     if not os.path.exists(path_output):
         os.mkdir(path_output)
         print "Created result directory"
@@ -178,8 +203,14 @@ def check_mkdir_output_path(path_output):
 
 
 def resize_input_image(image_original):
-    # Resizing the original images makes the slowest functions calc_deconv_matrix() and color.rgb2hsv()
-    # work much faster. No visual troubles or negative effects to the accuracy.
+    """
+    Resizing the original images makes the slowest functions calc_deconv_matrix() and color.rgb2hsv()
+    work much faster. No visual troubles or negative effects to the accuracy.
+    :param image_original: original image
+    :type image_original: array
+    :return: resized image
+    :rtype:array
+    """
     size = 640, 480
     image_original = image_original.resize(size, Image.NEAREST)
     return image_original
