@@ -208,6 +208,22 @@ def check_mkdir_output_path(path_output):
     else:
         print("Output result directory already exists. All the files inside would be overwritten!")
 
+def grayscale_to_stain_color(stain_dab):
+    """
+    Converts grayscale map of stain distribution to the colour representation.
+    The original grayscale is used as a L-channel in HSL colour space.
+    Hue and Saturation channels are defined manually.
+    """
+    # todo: Fix the grayscale to colour conversion
+    # DAB colour in HSL
+    array_image_hsl = np.zeros((480, 640, 3), dtype='uint8')
+    array_image_hsl[..., 0] = 25  # Hue
+    array_image_hsl[..., 1] = 88  # Saturation
+    stain_dab = 255 - stain_dab
+    array_image_hsl[..., 2] = stain_dab  # Lightness
+    image_stain_dab_color = color.hsv2rgb(array_image_hsl)
+    print(array_image_hsl)
+    return image_stain_dab_color
 
 def resize_input_image(image_original):
     """
