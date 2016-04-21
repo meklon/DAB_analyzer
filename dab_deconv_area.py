@@ -17,10 +17,10 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
-    parser.add_argument("-t", "--thresh", required=False, default=55,
+    parser.add_argument("-t", "--thresh", required=False, default=30,
                         type=int, help="Global threshold for DAB-positive area,"
                                        "from 0 to 100.Optimal values are usually"
-                                       " located from 40 to 65.")
+                                       " located from 25 to 45.")
     parser.add_argument("-e", "--empty", required=False, default=92,
                         type=int, help="Global threshold for EMPTY area,"
                                        "from 0 to 100.Optimal values are usually"
@@ -66,6 +66,10 @@ def separate_channels(image_original, matrix_dh):
     # [-1,0] to [0,1] as black and white respectively. Warning! Magic numbers.
     # Anyway it's not a trouble for correct thresholding. Only for histogram aspect.
     stain_dab = (stain_dab + 1) * 200
+    # Histogram shift. This correcion makes the background really blank. After the correction
+    # numpy clipping is performed to fit the 0-100 range
+    stain_dab -= 18
+    stain_dab = np.clip(stain_dab, 0, 100)
     stain_dab_1d = np.ravel(stain_dab)
 
     # Extracting Value channel from HSV of original image
