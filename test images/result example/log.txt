@@ -1,7 +1,7 @@
 Images for analysis: 4
-Image 1/4 saved: test images/sample example/result/Alex_Pan_06_analysis.png
-Image 2/4 saved: test images/sample example/result/Alex_Pan_08_analysis.png
-Image 3/4 saved: test images/sample example/result/Native_Pan_05_analysis.png
-Image 4/4 saved: test images/sample example/result/Native_Trop_02_analysis.png
-Analysis time: 46.5 seconds
-Average time per image: 11.6 seconds
+Image 1 / 4 saved: test images/sample example/result/Alex_Pan_06_analysis.png
+Image 2 / 4 saved: test images/sample example/result/Alex_Pan_08_analysis.png
+Image 3 / 4 saved: test images/sample example/result/Native_Pan_05_analysis.png
+Image 4 / 4 saved: test images/sample example/result/Native_Trop_02_analysis.png
+Analysis time: 5.7 seconds
+Average time per image: 1.4 seconds
