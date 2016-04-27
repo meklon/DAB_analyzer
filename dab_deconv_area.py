@@ -212,6 +212,7 @@ def check_mkdir_output_path(path_output):
     else:
         print("Output result directory already exists. All the files inside would be overwritten!")
 
+
 def grayscale_to_stain_color(stain_dab):
     """
     Converts grayscale map of stain distribution to the colour representation.
