@@ -36,8 +36,8 @@ Image 2/4 saved: /home/meklon/temp/sample/result/Native_Lam_09_analysis.png
 Image 3/4 saved: /home/meklon/temp/sample/result/Native_Pan_01_analysis.png
 Image 4/4 saved: /home/meklon/temp/sample/result/Native_Pan_02_analysis.png
 CSV saved: /home/meklon/temp/sample/result/test.csv
-Analysis time: 31.8 seconds
-Average time per image: 8.0 seconds
+Analysis time: 5.4 seconds
+Average time per image: 1.3 seconds
 ```
 #### CSV output example
 Filename | DAB-positive area, pixels | Empty area, % | DAB-positive area, %
