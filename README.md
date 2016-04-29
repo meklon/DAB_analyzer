@@ -1,5 +1,5 @@
 # DAB analyzer
-Python soft for DAB-chromagen analysis.
+Python soft for DAB-chromagen analysis. Software counts the stained area with DAB-chromagen using the typical immunohistochemistry protocols. After the analysis user can measure the difference of proteins content in tested samples.
 
 ### Application:
 Quantitative analysis of extracellular matrix proteins in IHC-analysis, designed for scientists in biotech sphere. 
