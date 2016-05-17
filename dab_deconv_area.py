@@ -4,10 +4,15 @@ import csv
 import timeit
 
 from PIL import Image
+
 import numpy as np
 from scipy import linalg
+from scipy import misc
 from skimage import color
+import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+
+import hasel
 
 
 def parse_arguments():
@@ -73,10 +78,10 @@ def separate_channels(image_original, matrix_dh):
     stain_dab_1d = np.ravel(stain_dab)
 
     # Extracting Value channel from HSV of original image
-    image_hsv = color.rgb2hsv(image_original)
-    channel_value = (image_hsv[..., 2] * 100)
+    image_hsl = hasel.rgb2hsl(image_original)
+    channel_lightness = (image_hsl[..., 2] * 100)
 
-    return stain_dab, stain_dab_1d, channel_value
+    return stain_dab, stain_dab_1d, channel_lightness
 
 
 def print_log(path_output_log, text_log, bool_log_new=False):
@@ -129,7 +134,7 @@ def count_areas(thresh_dab, thresh_empty):
     return area_dab_pos, area_rel_empty, area_rel_dab
 
 
-def plot_figure(image_original, stain_dab, stain_dab_1d, channel_value, thresh_dab, thresh_empty, thresh_default):
+def plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, thresh_default):
     """
     Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
     Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
@@ -162,8 +167,8 @@ def plot_figure(image_original, stain_dab, stain_dab_1d, channel_value, thresh_d
     plt.grid(True, color='#888888')
 
     plt.subplot(234)
-    plt.title('Value channel of original in HSV')
-    plt.imshow(channel_value, cmap=plt.cm.gray)
+    plt.title('Lightness channel')
+    plt.imshow(channel_lightness, cmap=plt.cm.gray)
 
     plt.subplot(235)
     plt.title('DAB positive area')
@@ -221,23 +226,22 @@ def grayscale_to_stain_color(stain_dab):
     """
     # todo: Fix the grayscale to colour conversion
     # DAB colour in HSL
-    array_image_hsl = np.zeros((480, 640, 3), dtype='uint8')
-    array_image_hsl[..., 0] = 25  # Hue
-    array_image_hsl[..., 1] = 88  # Saturation
-    stain_dab = 255 - stain_dab
+    array_image_hsl = np.zeros((480, 640, 3), dtype='float')
+    array_image_hsl[..., 0] = 0.0859375 # 25/256  # Hue
+    array_image_hsl[..., 1] = 0.34375 # 88/256  # Saturation
+    stain_dab = (255 - stain_dab)/256
     array_image_hsl[..., 2] = stain_dab  # Lightness
-    image_stain_dab_color = color.hsv2rgb(array_image_hsl)
-    print(array_image_hsl)
+    image_stain_dab_color = hasel.hsl2rgb(array_image_hsl)
     return image_stain_dab_color
 
-def resize_input_image(image_original):
+
+def resize_input_image(image_original, size):
     """
     Resizing the original images makes the slowest functions calc_deconv_matrix() and color.rgb2hsv()
     work much faster. No visual troubles or negative effects to the accuracy.
     """
 
-    size = 640, 480
-    image_original = image_original.resize(size, Image.NEAREST)
+    image_original = misc.imresize(image_original, size, interp='nearest')
     return image_original
 
 # Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
@@ -265,16 +269,19 @@ def main():
     # Recursive search through the path from argument
     filenames = get_image_filenames(args.path)
     print_log(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
+    print_log(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
     for filename in sorted(filenames):
         pathInputImage = os.path.join(args.path, filename)
         pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
-        imageOriginal = Image.open(pathInputImage)
-        imageOriginal = resize_input_image(imageOriginal)
+        imageOriginal = mpimg.imread(pathInputImage)
+
+        sizeImage = 480, 640
+        imageOriginal = resize_input_image(imageOriginal, sizeImage)
 
         stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrixDH)
         threshDAB, threshEmpty = count_thresholds(stainDAB, channelValue, args.thresh, args.empty)
         areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
-
+        #stainDAB = grayscale_to_stain_color(stainDAB)
         # Close all figures after cycle end
         plt.close('all')
 
