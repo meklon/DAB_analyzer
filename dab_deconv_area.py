@@ -77,9 +77,12 @@ def separate_channels(image_original, matrix_dh):
     stain_dab = np.clip(stain_dab, 0, 100)
     stain_dab_1d = np.ravel(stain_dab)
 
-    # Extracting Value channel from HSV of original image
+    # Extracting Lightness channel from HSL of original image
+    # L-channel is multiplied to 100 to get the range 0-100 % from 0-1. It's easier to use with
+    # empty area threshold
     image_hsl = hasel.rgb2hsl(image_original)
     channel_lightness = (image_hsl[..., 2] * 100)
+    print(channel_lightness)
 
     return stain_dab, stain_dab_1d, channel_lightness
 
@@ -105,16 +108,16 @@ def print_log(path_output_log, text_log, bool_log_new=False):
             fileLog.write('\n')
 
 
-def count_thresholds(stain_dab, channel_value, thresh_default, thresh_empty_default):
+def count_thresholds(stain_dab, channel_lightness, thresh_default, thresh_empty_default):
     """
-    Counts thresholds. stain_dab is a distribution map of DAB stain, channel_value is a value channel from
-    original image in HSV color space. The output are the thresholded images of DAB-positive areas and
+    Counts thresholds. stain_dab is a distribution map of DAB stain, channel_lightness is a L channel from
+    original image in HSL color space. The output are the thresholded images of DAB-positive areas and
     empty areas. thresh_default is also in output as plot_figure() needs it to make a vertical line of
     threshold on a histogram.
     """
 
     thresh_dab = stain_dab > thresh_default
-    thresh_empty = channel_value > thresh_empty_default
+    thresh_empty = channel_lightness > thresh_empty_default
     return thresh_dab, thresh_empty
 
 
@@ -237,7 +240,7 @@ def grayscale_to_stain_color(stain_dab):
 
 def resize_input_image(image_original, size):
     """
-    Resizing the original images makes the slowest functions calc_deconv_matrix() and color.rgb2hsv()
+    Resizing the original images makes the slowest functions calc_deconv_matrix() and hasel.hsl2rgb()
     work much faster. No visual troubles or negative effects to the accuracy.
     """
 
@@ -278,8 +281,8 @@ def main():
         sizeImage = 480, 640
         imageOriginal = resize_input_image(imageOriginal, sizeImage)
 
-        stainDAB, stainDAB_1D, channelValue = separate_channels(imageOriginal, matrixDH)
-        threshDAB, threshEmpty = count_thresholds(stainDAB, channelValue, args.thresh, args.empty)
+        stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
+        threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
         areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
         #stainDAB = grayscale_to_stain_color(stainDAB)
         # Close all figures after cycle end
@@ -292,7 +295,7 @@ def main():
             arrayFilenames = np.vstack((arrayFilenames, filename))
 
             # Creating the summary image
-            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelValue, threshDAB, threshEmpty, args.thresh)
+            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelLightness, threshDAB, threshEmpty, args.thresh)
             plt.savefig(pathOutputImage)
 
             print_log(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))

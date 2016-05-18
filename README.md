@@ -17,7 +17,7 @@ Script uses the **color deconvolution method**. It was well described by [G. Lan
 
 Color deconvolution is used to separate stains in multi-stained sample. This soft is applied for Hematoxyline + DAB staining. Script uses hardcoded stain matrix determined for our lab's dyes. You should determine your own for better result using ImageJ and hyperlink above. Determined custom matrix should replace the default one. For additional information see the comments in code.
 
-After DAB separation, script determines the DAB-positive area using the default or user-defined threshold. The empty areas are excluded from the final realative area measurement as the sample could contain free space, which would affect the result accuracy.
+After DAB separation, script determines the DAB-positive area using the default or user-defined threshold. The empty areas are excluded from the final relative area measurement as the sample could contain free space, which would affect the result accuracy.
 
 Script creates the result folder inside the --path. Statistics, log and synthetic images for each sample are saved there.
 ### Examples
@@ -51,7 +51,7 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 
 *-p, --path* (obligate) - path to the target directory with samples
 
-*-t, --thresh* (optional) - threshold for DAB+ area separation. If empty the default value would be used (threshDefault = 55).
+*-t, --thresh* (optional) - threshold for DAB+ area separation. If empty the default value would be used (threshDefault = 30).
 
 *-e, --empty* (optional) - threshold for **empty area** separation. If empty the default value would be used (threshEmptyDefault = 92).
 
