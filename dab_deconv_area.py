@@ -3,14 +3,13 @@ import os
 import csv
 import timeit
 
-from PIL import Image
-
 import numpy as np
 from scipy import linalg
 from scipy import misc
 from skimage import color
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 import hasel
 
@@ -76,18 +75,15 @@ def separate_channels(image_original, matrix_dh):
     stain_dab -= 18
     stain_dab = np.clip(stain_dab, 0, 100)
     stain_dab_1d = np.ravel(stain_dab)
-
     # Extracting Lightness channel from HSL of original image
     # L-channel is multiplied to 100 to get the range 0-100 % from 0-1. It's easier to use with
     # empty area threshold
     image_hsl = hasel.rgb2hsl(image_original)
     channel_lightness = (image_hsl[..., 2] * 100)
-    print(channel_lightness)
-
     return stain_dab, stain_dab_1d, channel_lightness
 
 
-def print_log(path_output_log, text_log, bool_log_new=False):
+def log_and_console(path_output_log, text_log, bool_log_new=False):
     """
     Write the log and show the text in console
     bool_log_new is used to erase the log file if it exists to avoid appending new data to the old one
@@ -104,6 +100,15 @@ def print_log(path_output_log, text_log, bool_log_new=False):
     else:
         print(text_log)
         with open(path_output_log, "a") as fileLog:
+            fileLog.write(text_log)
+            fileLog.write('\n')
+
+
+def log_only(path_output_log, text_log):
+    """
+    Write the log to the file only
+    """
+    with open(path_output_log, "a") as fileLog:
             fileLog.write(text_log)
             fileLog.write('\n')
 
@@ -230,8 +235,8 @@ def grayscale_to_stain_color(stain_dab):
     # todo: Fix the grayscale to colour conversion
     # DAB colour in HSL
     array_image_hsl = np.zeros((480, 640, 3), dtype='float')
-    array_image_hsl[..., 0] = 0.0859375 # 25/256  # Hue
-    array_image_hsl[..., 1] = 0.34375 # 88/256  # Saturation
+    array_image_hsl[..., 0] = 0.0859375  # 25/256 Hue
+    array_image_hsl[..., 1] = 0.34375  # 88/256 Saturation
     stain_dab = (255 - stain_dab)/256
     array_image_hsl[..., 2] = stain_dab  # Lightness
     image_stain_dab_color = hasel.hsl2rgb(array_image_hsl)
@@ -271,9 +276,9 @@ def main():
 
     # Recursive search through the path from argument
     filenames = get_image_filenames(args.path)
-    print_log(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
-    print_log(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
-    for filename in sorted(filenames):
+    log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
+    log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
+    for filename in tqdm(sorted(filenames)):
         pathInputImage = os.path.join(args.path, filename)
         pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
         imageOriginal = mpimg.imread(pathInputImage)
@@ -284,7 +289,8 @@ def main():
         stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
         threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
         areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
-        #stainDAB = grayscale_to_stain_color(stainDAB)
+        # stainDAB = grayscale_to_stain_color(stainDAB)
+
         # Close all figures after cycle end
         plt.close('all')
 
@@ -298,7 +304,7 @@ def main():
             plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelLightness, threshDAB, threshEmpty, args.thresh)
             plt.savefig(pathOutputImage)
 
-            print_log(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
+            log_only(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
 
             # In silent mode image would be closed immediately
             if not args.silent:
@@ -316,8 +322,8 @@ def main():
         averageImageTime = (elapsedGlobal - len(filenames)*varPause)/len(filenames)  # compensate the pause
     else:
         averageImageTime = elapsedGlobal/len(filenames)
-    print_log(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
-    print_log(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
+    log_and_console(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
+    log_and_console(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
 
 
 if __name__ == '__main__':
