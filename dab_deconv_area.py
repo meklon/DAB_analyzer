@@ -66,6 +66,7 @@ def separate_channels(image_original, matrix_dh):
     stain_dab = image_separated[..., 1]
     # Hematox channel separation is disabled, you can switch it on if you need an image with both stains.
     # one of plot_figure() subplots should be replaced with stainHematox
+    
     # stainHematox = image_separated[..., 0]
 
     # 1-D array for histogram conversion, 1 added to move the original range from
