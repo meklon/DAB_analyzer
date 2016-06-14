@@ -27,6 +27,9 @@ Script will render this type of image for **each of your samples**. User should 
 ![Synthetic image example 1](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Native_Pan_05_analysis.png "Synthetic image example")
 
 ![Synthetic image example 2](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Alex_Pan_08_analysis.png "Synthetic image example")
+
+#### Console example with progress bar
+![Console example](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/console_screenshot.png "Console example")
 #### Log example
 ```
 Created result directory
