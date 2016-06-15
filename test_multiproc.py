@@ -2,7 +2,7 @@ import argparse
 import os
 import csv
 import timeit
-from multiprocessing import Pool
+import multiprocessing as mp
 
 import numpy as np
 from scipy import linalg
@@ -257,73 +257,51 @@ def resize_input_image(image_original, size):
     return image_original
 
 
-def image_process(filename):
+def image_process(filenames, image_output_queue):
     # Variables are declared as global
     # Empty ones
     global arrayData
     global arrayFilenames
     global count_cycle
 
-    print(filename)
-    pathInputImage = os.path.join(args.path, filename)
-    pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
-    imageOriginal = mpimg.imread(pathInputImage)
+    for filename in tqdm(sorted(filenames)):
+        print(filename)
+        pathInputImage = os.path.join(args.path, filename)
+        pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
+        imageOriginal = mpimg.imread(pathInputImage)
 
-    sizeImage = 480, 640
-    imageOriginal = resize_input_image(imageOriginal, sizeImage)
+        sizeImage = 480, 640
+        imageOriginal = resize_input_image(imageOriginal, sizeImage)
 
-    stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
-    threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
-    areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
-    # stainDAB = grayscale_to_stain_color(stainDAB)
+        stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
+        threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
+        areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
+        #stainDAB = grayscale_to_stain_color(stainDAB)
 
-    # Close all figures after cycle end
-    plt.close('all')
+        # Close all figures after cycle end
+        plt.close('all')
 
-    arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
-    arrayFilenames = np.vstack((arrayFilenames, filename))
+        # Loop for filling the list with file names and area results
+        count_cycle += 1
+        if count_cycle <= len(filenames):
+            arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
+            arrayFilenames = np.vstack((arrayFilenames, filename))
 
-    # Creating the summary image
-    plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelLightness, threshDAB, threshEmpty, args.thresh)
-    plt.savefig(pathOutputImage)
+            # Creating the summary image
+            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelLightness, threshDAB, threshEmpty, args.thresh)
+            plt.savefig(pathOutputImage)
 
-    #log_only(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
+            log_only(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
 
-    # In silent mode image would be closed immediately
-    if not args.silent:
-        plt.pause(varPause)
+            # In silent mode image would be closed immediately
+            if not args.silent:
+                plt.pause(varPause)
 
+        # At the last cycle we're saving the summary csv
+        if count_cycle == len(filenames):
+            save_csv(pathOutputCSV, arrayFilenames, arrayData)
+            break
 
-
-
-
-"""
-Global declarations and variables
-The variable below were made global to be used in image_process() function
-It is necessary for multiprocess analysis
-"""
-# todo: reduce the global variables if possible
-
-# Declare the zero variables and empty arrays
-count_cycle = 0
-arrayData = np.empty([0, 3])
-arrayFilenames = np.empty([0, 1])
-
-# Pause in seconds between the complex images when --silent(-s) argument is not active
-varPause = 5
-"""
-Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
-More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
-Declare vectors as a constant
-"""
-matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
-                              [0.4100872, 0.5751321, 0.70785],
-                              [0.6241389, 0.53632, 0.56816506]])
-# Calculate the DAB and HE deconvolution matrix
-matrixDH = calc_deconv_matrix(matrixVectorDabHE)
-# Parse the arguments
-args = parse_arguments()
-pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
 
 def main():
     # Initialize the global timer
@@ -334,14 +312,18 @@ def main():
     log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
     log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
 
-
-    # Multiprocess implementation
-    pool = Pool()
-
+    # Multiprocess part
+    # Define an output queue
+    image_outputQueue = mp.Queue()
     # Main cycle where the images are processed and the data is obtained
-    pool.map(image_process, filenames)
-    pool.close()
-    pool.join()
+    processes = [mp.Process(target=image_process, args=(filenames, image_outputQueue)) for x in range(4)]
+    # Run processes
+    for process in processes:
+        process.start()
+
+    # Exit the completed processes
+    for process in processes:
+        process.join()
 
     # At the last cycle we're saving the summary csv
     save_csv(pathOutputCSV, arrayFilenames, arrayData)
@@ -357,4 +339,32 @@ def main():
 
 
 if __name__ == '__main__':
+    """
+    Global declarations and variables
+    The variable below were made global to be used in image_process() function
+    It is necessary for multiprocess analysis
+    """
+    # todo: reduce the global variables if possible
+
+    # Declare the zero variables and empty arrays
+    count_cycle = 0
+    arrayData = np.empty([0, 3])
+    arrayFilenames = np.empty([0, 1])
+
+    # Pause in seconds between the complex images when --silent(-s) argument is not active
+    varPause = 5
+    """
+    Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
+    More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
+    Declare vectors as a constant
+    """
+    matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
+                                  [0.4100872, 0.5751321, 0.70785],
+                                  [0.6241389, 0.53632, 0.56816506]])
+    # Calculate the DAB and HE deconvolution matrix
+    matrixDH = calc_deconv_matrix(matrixVectorDabHE)
+    # Parse the arguments
+    args = parse_arguments()
+    pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
+
     main()
