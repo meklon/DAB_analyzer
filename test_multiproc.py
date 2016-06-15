@@ -257,50 +257,45 @@ def resize_input_image(image_original, size):
     return image_original
 
 
-def image_process(filenames, image_output_queue):
+def image_process(filename, image_output_queue):
     # Variables are declared as global
     # Empty ones
     global arrayData
     global arrayFilenames
     global count_cycle
 
-    for filename in tqdm(sorted(filenames)):
-        print(filename)
-        pathInputImage = os.path.join(args.path, filename)
-        pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
-        imageOriginal = mpimg.imread(pathInputImage)
+    print(filename)
+    pathInputImage = os.path.join(args.path, filename)
+    pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
+    imageOriginal = mpimg.imread(pathInputImage)
 
-        sizeImage = 480, 640
-        imageOriginal = resize_input_image(imageOriginal, sizeImage)
+    sizeImage = 480, 640
+    imageOriginal = resize_input_image(imageOriginal, sizeImage)
 
-        stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
-        threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
-        areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
-        #stainDAB = grayscale_to_stain_color(stainDAB)
+    stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
+    threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
+    areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
+    #stainDAB = grayscale_to_stain_color(stainDAB)
 
-        # Close all figures after cycle end
-        plt.close('all')
+    # Close all figures after cycle end
+    plt.close('all')
 
-        # Loop for filling the list with file names and area results
-        count_cycle += 1
-        if count_cycle <= len(filenames):
-            arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
-            arrayFilenames = np.vstack((arrayFilenames, filename))
+    # Loop for filling the list with file names and area results
+    arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
+    arrayFilenames = np.vstack((arrayFilenames, filename))
 
-            # Creating the summary image
-            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelLightness, threshDAB, threshEmpty, args.thresh)
-            plt.savefig(pathOutputImage)
+    # Creating the summary image
+    plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelLightness, threshDAB, threshEmpty, args.thresh)
+    plt.savefig(pathOutputImage)
 
-            log_only(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
+    #log_only(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
 
-            # In silent mode image would be closed immediately
-            if not args.silent:
-                plt.pause(varPause)
+    # In silent mode image would be closed immediately
+    if not args.silent:
+        plt.pause(varPause)
 
-        # At the last cycle we're saving the summary csv
-        if count_cycle == len(filenames):
-            save_csv(pathOutputCSV, arrayFilenames, arrayData)
-            break
+    save_csv(pathOutputCSV, arrayFilenames, arrayData)
+
 
 
 def main():
@@ -314,15 +309,18 @@ def main():
 
     # Multiprocess part
     # Define an output queue
+    cores = mp.cpu_count()
+    print('CPU cores = {}'.format(cores))
     image_outputQueue = mp.Queue()
-    # Main cycle where the images are processed and the data is obtained
-    processes = [mp.Process(target=image_process, args=(filenames, image_outputQueue)) for x in range(4)]
-    # Run processes
-    for process in processes:
-        process.start()
 
-    # Exit the completed processes
-    for process in processes:
+    for filename in tqdm(sorted(filenames)):
+        for i in range(cores):
+            # Main cycle where the images are processed and the data is obtained
+            process = mp.Process(target=image_process, args=(filename, image_outputQueue))
+            # Run processes
+            process.start()
+
+        # Exit the completed processes
         process.join()
 
     # At the last cycle we're saving the summary csv
