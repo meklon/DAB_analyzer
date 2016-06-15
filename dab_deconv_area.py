@@ -64,9 +64,6 @@ def separate_channels(image_original, matrix_dh):
 
     image_separated = color.separate_stains(image_original, matrix_dh)
     stain_dab = image_separated[..., 1]
-    # Hematox channel separation is disabled, you can switch it on if you need an image with both stains.
-    # one of plot_figure() subplots should be replaced with stainHematox
-
     # stainHematox = image_separated[..., 0]
 
     # 1-D array for histogram conversion, 1 added to move the original range from
@@ -274,7 +271,7 @@ def image_process(filenames):
         stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
         threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
         areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
-        # stainDAB = grayscale_to_stain_color(stainDAB)
+        #stainDAB = grayscale_to_stain_color(stainDAB)
 
         # Close all figures after cycle end
         plt.close('all')
@@ -301,33 +298,6 @@ def image_process(filenames):
             break
 
 
-"""
-Global declarations and variables
-The variable below were made global to be used in image_process() function
-It is necessary for multiprocess analysis
-"""
-# todo: reduce the global variables if possible
-
-# Declare the zero variables and empty arrays
-count_cycle = 0
-arrayData = np.empty([0, 3])
-arrayFilenames = np.empty([0, 1])
-
-# Pause in seconds between the complex images when --silent(-s) argument is not active
-varPause = 5
-"""
-Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
-More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
-Declare vectors as a constant
-"""
-matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
-                              [0.4100872, 0.5751321, 0.70785],
-                              [0.6241389, 0.53632, 0.56816506]])
-# Calculate the DAB and HE deconvolution matrix
-matrixDH = calc_deconv_matrix(matrixVectorDabHE)
-# Parse the arguments
-args = parse_arguments()
-pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
 
 def main():
     # Initialize the global timer
@@ -352,4 +322,32 @@ def main():
 
 
 if __name__ == '__main__':
+    """
+    Global declarations and variables
+    The variable below were made global to be used in image_process() function
+    It is necessary for multiprocess analysis
+    """
+    # todo: reduce the global variables if possible
+
+    # Declare the zero variables and empty arrays
+    count_cycle = 0
+    arrayData = np.empty([0, 3])
+    arrayFilenames = np.empty([0, 1])
+
+    # Pause in seconds between the complex images when --silent(-s) argument is not active
+    varPause = 5
+    """
+    Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
+    More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
+    Declare vectors as a constant
+    """
+    matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
+                                  [0.4100872, 0.5751321, 0.70785],
+                                  [0.6241389, 0.53632, 0.56816506]])
+    # Calculate the DAB and HE deconvolution matrix
+    matrixDH = calc_deconv_matrix(matrixVectorDabHE)
+    # Parse the arguments
+    args = parse_arguments()
+    pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
+
     main()
