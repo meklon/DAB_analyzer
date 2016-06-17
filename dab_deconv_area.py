@@ -294,6 +294,7 @@ def image_process(filenames):
 
         # At the last cycle we're saving the summary csv
         if count_cycle == len(filenames):
+            print(arrayData)
             save_csv(pathOutputCSV, arrayFilenames, arrayData)
             break
 

@@ -281,7 +281,7 @@ def image_process(filename):
     plt.close('all')
 
     array_data = np.vstack((array_data, [area_dab_pos, area_rel_empty, area_rel_dab]))
-    array_filenames = np.vstack((array_filenames, filename))
+
 
     # Creating the summary image
     plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh)
@@ -319,14 +319,23 @@ def main():
 
     # Main cycle where the images are processed and the data is obtained
     pool = Pool()
-    arrayData = pool.map(image_process, filenames)
+    poolResults = pool.map(image_process, filenames)
     pool.close()
     pool.join()
+
+    arrayData = np.empty([0, 3])
+    for poolResult in poolResults:
+        print(np.shape(poolResult))
+        arrayData = np.append(arrayData, poolResult, axis=0)
+
+    arrayFilenames = np.empty([0, 1])
+    for filename in filenames:
+        arrayFilenames = np.vstack((arrayFilenames, filename))
+
+    print(np.shape(poolResult))
     print(arrayData)
-    cleaned = np.asarray(arrayData)
-    print(cleaned)
     # At the last cycle we're saving the summary csv
-    #save_csv(pathOutputCSV, arrayFilenames, arrayData)
+    save_csv(pathOutputCSV, arrayFilenames, arrayData)
 
     # End the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
@@ -348,10 +357,10 @@ if __name__ == '__main__':
 
     # Declare the zero variables and empty arrays
     array_data = np.empty([0, 3])
-    array_filenames = np.empty([0, 1])
 
     # Pause in seconds between the complex images when --silent(-s) argument is not active
     varPause = 5
+
     """
     Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
     More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
