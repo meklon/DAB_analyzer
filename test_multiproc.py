@@ -257,7 +257,7 @@ def resize_input_image(image_original, size):
     return image_original
 
 
-def image_process(array_data, var_pause, filename):
+def image_process(array_data, var_pause, matrix_dh, filename):
     path_input_image = os.path.join(args.path, filename)
     path_output_image = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
     image_original = mpimg.imread(path_input_image)
@@ -275,12 +275,11 @@ def image_process(array_data, var_pause, filename):
 
     array_data = np.vstack((array_data, [area_dab_pos, area_rel_empty, area_rel_dab]))
 
-
     # Creating the summary image
     plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh)
     plt.savefig(path_output_image)
 
-    log_only(pathOutputLog, "Image saved: {}".format(path_output_image))
+    log_and_console(pathOutputLog, "Image saved: {}".format(path_output_image))
 
     # In silent mode image would be closed immediately
     if not args.silent:
@@ -288,16 +287,9 @@ def image_process(array_data, var_pause, filename):
     return array_data
 
 
-# def wrapper_image_process(filenames, array_data):
-#     """
-#     Wrapper is used to give more than single argument to the function
-#     using the pool.map().
-#     """
-#
-#     return image_process(filenames, array_data)
-
 def main():
     arrayData = np.empty([0, 3])
+    # Pause in seconds between the complex images when --silent(-s) argument is not active
     varPause = 5
 
     # Initialize the global timer
@@ -308,20 +300,20 @@ def main():
     log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
     log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
 
+    # Calculate the DAB and HE deconvolution matrix
+    matrixDH = calc_deconv_matrix(matrixVectorDabHE)
+
     # Multiprocess implementation
     cores = cpu_count()
     log_and_console(pathOutputLog, "CPU cores used: {}".format(cores))
 
     # Main cycle where the images are processed and the data is obtained
     pool = Pool()
-    wrapper_image_process = partial(image_process, arrayData, varPause)
-    poolResults = pool.map(wrapper_image_process, filenames)
+    wrapper_image_process = partial(image_process, arrayData, varPause, matrixDH)
+    for poolResult in pool.map(wrapper_image_process, filenames):
+        arrayData = np.append(arrayData, poolResult, axis=0)
     pool.close()
     pool.join()
-
-    for poolResult in poolResults:
-        print(np.shape(poolResult))
-        arrayData = np.append(arrayData, poolResult, axis=0)
 
     arrayFilenames = np.empty([0, 1])
     for filename in filenames:
@@ -342,19 +334,6 @@ def main():
 
 if __name__ == '__main__':
     """
-    Global declarations and variables
-    The variable below were made global to be used in image_process() function
-    It is necessary for multiprocess analysis
-    """
-    # todo: reduce the global variables if possible
-
-    # Declare the zero variables and empty arrays
-
-
-    # Pause in seconds between the complex images when --silent(-s) argument is not active
-
-
-    """
     Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
     More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
     Declare vectors as a constant
@@ -362,8 +341,6 @@ if __name__ == '__main__':
     matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
                                   [0.4100872, 0.5751321, 0.70785],
                                   [0.6241389, 0.53632, 0.56816506]])
-    # Calculate the DAB and HE deconvolution matrix
-    matrix_dh = calc_deconv_matrix(matrixVectorDabHE)
     # Parse the arguments
     args = parse_arguments()
     pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
