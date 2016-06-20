@@ -2,7 +2,7 @@ import argparse
 import os
 import csv
 import timeit
-from multiprocessing import Pool, cpu_count, Semaphore
+from multiprocessing import Pool, cpu_count
 from functools import partial
 
 import numpy as np
@@ -307,7 +307,8 @@ def main():
     check_mkdir_output_path(pathOutput)
     filenames = get_image_filenames(args.path)
     log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
-    log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
+    log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) +
+                    ", Empty threshold = " + str(args.empty))
 
     # Calculate the DAB and HE deconvolution matrix
     matrixDH = calc_deconv_matrix(matrixVectorDabHE)
