@@ -2,14 +2,14 @@ import argparse
 import os
 import csv
 import timeit
+from multiprocessing import Pool, cpu_count, Semaphore
+from functools import partial
 
 import numpy as np
-from scipy import linalg
-from scipy import misc
+from scipy import linalg, misc
 from skimage import color
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 
 import hasel
 
@@ -64,6 +64,9 @@ def separate_channels(image_original, matrix_dh):
 
     image_separated = color.separate_stains(image_original, matrix_dh)
     stain_dab = image_separated[..., 1]
+    # Hematox channel separation is disabled, you can switch it on if you need an image with both stains.
+    # one of plot_figure() subplots should be replaced with stainHematox
+
     # stainHematox = image_separated[..., 0]
 
     # 1-D array for histogram conversion, 1 added to move the original range from
@@ -253,64 +256,81 @@ def resize_input_image(image_original, size):
     return image_original
 
 
-def image_process(filenames):
-    # Variables are declared as global
-    # Empty ones
-    global arrayData
-    global arrayFilenames
-    global count_cycle
+def image_process(array_data, var_pause, matrix_dh, args, pathOutput, pathOutputLog, filename):
+    """
+    Main cycle, split into several processes using the Pool(). All images pass through this
+    function. The result of this function are composite images, saved in the target directory,
+    log output and array_data - numpy array, containing the data obtained.
+    """
 
-    for filename in tqdm(sorted(filenames)):
-        pathInputImage = os.path.join(args.path, filename)
-        pathOutputImage = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
-        imageOriginal = mpimg.imread(pathInputImage)
+    path_input_image = os.path.join(args.path, filename)
+    path_output_image = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
+    image_original = mpimg.imread(path_input_image)
 
-        sizeImage = 480, 640
-        imageOriginal = resize_input_image(imageOriginal, sizeImage)
+    size_image = 480, 640
+    image_original = resize_input_image(image_original, size_image)
 
-        stainDAB, stainDAB_1D, channelLightness = separate_channels(imageOriginal, matrixDH)
-        threshDAB, threshEmpty = count_thresholds(stainDAB, channelLightness, args.thresh, args.empty)
-        areaDAB_pos, areaRelEmpty, areaRelDAB = count_areas(threshDAB, threshEmpty)
-        #stainDAB = grayscale_to_stain_color(stainDAB)
+    stain_dab, stain_dab_1d, channel_lightness = separate_channels(image_original, matrix_dh)
+    thresh_dab, thresh_empty = count_thresholds(stain_dab, channel_lightness, args.thresh, args.empty)
+    area_dab_pos, area_rel_empty, area_rel_dab = count_areas(thresh_dab, thresh_empty)
+    # stain_dab = grayscale_to_stain_color(stain_dab)
 
-        # Close all figures after cycle end
-        plt.close('all')
+    # Close all figures after cycle end
+    plt.close('all')
 
-        # Loop for filling the list with file names and area results
-        count_cycle += 1
-        if count_cycle <= len(filenames):
-            arrayData = np.vstack((arrayData, [areaDAB_pos, areaRelEmpty, areaRelDAB]))
-            arrayFilenames = np.vstack((arrayFilenames, filename))
+    array_data = np.vstack((array_data, [area_dab_pos, area_rel_empty, area_rel_dab]))
 
-            # Creating the summary image
-            plot_figure(imageOriginal, stainDAB, stainDAB_1D, channelLightness, threshDAB, threshEmpty, args.thresh)
-            plt.savefig(pathOutputImage)
+    # Creating the summary image
+    plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh)
+    plt.savefig(path_output_image)
 
-            log_only(pathOutputLog, "Image {} / {} saved: {}".format(count_cycle, len(filenames), pathOutputImage))
+    log_and_console(pathOutputLog, "Image saved: {}".format(path_output_image))
 
-            # In silent mode image would be closed immediately
-            if not args.silent:
-                plt.pause(varPause)
-
-        # At the last cycle we're saving the summary csv
-        if count_cycle == len(filenames):
-            print(arrayData)
-            save_csv(pathOutputCSV, arrayFilenames, arrayData)
-            break
-
+    # In silent mode image would be closed immediately
+    if not args.silent:
+        plt.pause(var_pause)
+    return array_data
 
 
 def main():
+    arrayData = np.empty([0, 3])
+    # Pause in seconds between the complex images when --silent(-s) argument is not active
+    varPause = 5
+
     # Initialize the global timer
     startTimeGlobal = timeit.default_timer()
+
+    # Parse the arguments
+    args = parse_arguments()
+    pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
 
     check_mkdir_output_path(pathOutput)
     filenames = get_image_filenames(args.path)
     log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
     log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
 
+    # Calculate the DAB and HE deconvolution matrix
+    matrixDH = calc_deconv_matrix(matrixVectorDabHE)
+
+    # Multiprocess implementation
+    cores = cpu_count()
+    log_and_console(pathOutputLog, "CPU cores used: {}".format(cores))
+
     # Main cycle where the images are processed and the data is obtained
-    image_process(filenames)
+    pool = Pool(cores)
+    wrapper_image_process = partial(image_process, arrayData, varPause, matrixDH,
+                                    args, pathOutput, pathOutputLog)
+    for poolResult in pool.imap(wrapper_image_process, filenames):
+        arrayData = np.append(arrayData, poolResult, axis=0)
+    pool.close()
+    pool.join()
+
+    arrayFilenames = np.empty([0, 1])
+    for filename in filenames:
+        arrayFilenames = np.vstack((arrayFilenames, filename))
+
+    # Summary csv after main cycle end
+    save_csv(pathOutputCSV, arrayFilenames, arrayData)
 
     # End the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
@@ -324,20 +344,6 @@ def main():
 
 if __name__ == '__main__':
     """
-    Global declarations and variables
-    The variable below were made global to be used in image_process() function
-    It is necessary for multiprocess analysis
-    """
-    # todo: reduce the global variables if possible
-
-    # Declare the zero variables and empty arrays
-    count_cycle = 0
-    arrayData = np.empty([0, 3])
-    arrayFilenames = np.empty([0, 1])
-
-    # Pause in seconds between the complex images when --silent(-s) argument is not active
-    varPause = 5
-    """
     Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
     More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
     Declare vectors as a constant
@@ -345,10 +351,5 @@ if __name__ == '__main__':
     matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
                                   [0.4100872, 0.5751321, 0.70785],
                                   [0.6241389, 0.53632, 0.56816506]])
-    # Calculate the DAB and HE deconvolution matrix
-    matrixDH = calc_deconv_matrix(matrixVectorDabHE)
-    # Parse the arguments
-    args = parse_arguments()
-    pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
 
     main()
