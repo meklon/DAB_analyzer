@@ -2,12 +2,11 @@ import argparse
 import os
 import csv
 import timeit
-from multiprocessing import Pool
-from multiprocessing import cpu_count
+from multiprocessing import Pool, cpu_count, Semaphore
+from functools import partial
 
 import numpy as np
-from scipy import linalg
-from scipy import misc
+from scipy import linalg, misc
 from skimage import color
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -258,13 +257,7 @@ def resize_input_image(image_original, size):
     return image_original
 
 
-def image_process(filename):
-    # Variables are declared as global
-    # Empty ones
-    global array_data
-    global array_filenames
-
-    print(filename)
+def image_process(array_data, var_pause, filename):
     path_input_image = os.path.join(args.path, filename)
     path_output_image = os.path.join(pathOutput, filename.split(".")[0] + "_analysis.png")
     image_original = mpimg.imread(path_input_image)
@@ -291,19 +284,22 @@ def image_process(filename):
 
     # In silent mode image would be closed immediately
     if not args.silent:
-        plt.pause(varPause)
-
+        plt.pause(var_pause)
     return array_data
 
-# def wrapper_image_process(args):
+
+# def wrapper_image_process(filenames, array_data):
 #     """
 #     Wrapper is used to give more than single argument to the function
 #     using the pool.map().
 #     """
-#     print(args)
-#     return image_process(*args)
+#
+#     return image_process(filenames, array_data)
 
 def main():
+    arrayData = np.empty([0, 3])
+    varPause = 5
+
     # Initialize the global timer
     startTimeGlobal = timeit.default_timer()
 
@@ -312,18 +308,17 @@ def main():
     log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
     log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) + ", Empty threshold = " + str(args.empty))
 
-
     # Multiprocess implementation
     cores = cpu_count()
     log_and_console(pathOutputLog, "CPU cores used: {}".format(cores))
 
     # Main cycle where the images are processed and the data is obtained
     pool = Pool()
-    poolResults = pool.map(image_process, filenames)
+    wrapper_image_process = partial(image_process, arrayData, varPause)
+    poolResults = pool.map(wrapper_image_process, filenames)
     pool.close()
     pool.join()
 
-    arrayData = np.empty([0, 3])
     for poolResult in poolResults:
         print(np.shape(poolResult))
         arrayData = np.append(arrayData, poolResult, axis=0)
@@ -332,8 +327,6 @@ def main():
     for filename in filenames:
         arrayFilenames = np.vstack((arrayFilenames, filename))
 
-    print(np.shape(poolResult))
-    print(arrayData)
     # At the last cycle we're saving the summary csv
     save_csv(pathOutputCSV, arrayFilenames, arrayData)
 
@@ -356,10 +349,10 @@ if __name__ == '__main__':
     # todo: reduce the global variables if possible
 
     # Declare the zero variables and empty arrays
-    array_data = np.empty([0, 3])
+
 
     # Pause in seconds between the complex images when --silent(-s) argument is not active
-    varPause = 5
+
 
     """
     Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
