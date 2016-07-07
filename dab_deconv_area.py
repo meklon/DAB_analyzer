@@ -30,8 +30,8 @@ def parse_arguments():
                                        "from 0 to 100.Optimal values are usually"
                                        " located from 88 to 95.")
     parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
-                                                               " only the final results"
-                                                               " would be saved", action="store_true")
+                                                               " only final results"
+                                                               " will be saved", action="store_true")
     arguments = parser.parse_args()
     return arguments
 
@@ -64,12 +64,12 @@ def separate_channels(image_original, matrix_dh):
 
     image_separated = color.separate_stains(image_original, matrix_dh)
     stain_dab = image_separated[..., 1]
-    # Hematox channel separation is disabled, you can switch it on if you need an image with both stains.
+    # Hematox channel separation is disabled, it could be switched on if image with both stains is needed.
     # one of plot_figure() subplots should be replaced with stainHematox
 
     # stainHematox = image_separated[..., 0]
 
-    # 1-D array for histogram conversion, 1 added to move the original range from
+    # 1-D array for histogram conversion, 1 was added to move the original range from
     # [-1,0] to [0,1] as black and white respectively. Warning! Magic numbers.
     # Anyway it's not a trouble for correct thresholding. Only for histogram aspect.
     stain_dab = (stain_dab + 1) * 200
@@ -249,7 +249,7 @@ def grayscale_to_stain_color(stain_dab):
 def resize_input_image(image_original, size):
     """
     Resizing the original images makes the slowest functions calc_deconv_matrix() and hasel.hsl2rgb()
-    work much faster. No visual troubles or negative effects to the accuracy.
+    work much faster. There are no visual troubles or negative effects to the accuracy.
     """
 
     image_original = misc.imresize(image_original, size, interp='nearest')
@@ -259,7 +259,7 @@ def resize_input_image(image_original, size):
 def image_process(array_data, var_pause, matrix_dh, args, pathOutput, pathOutputLog, filename):
     """
     Main cycle, split into several processes using the Pool(). All images pass through this
-    function. The result of this function are composite images, saved in the target directory,
+    function. The result of this function is composite images, saved in the target directory,
     log output and array_data - numpy array, containing the data obtained.
     """
 
@@ -280,13 +280,13 @@ def image_process(array_data, var_pause, matrix_dh, args, pathOutput, pathOutput
 
     array_data = np.vstack((array_data, [area_dab_pos, area_rel_empty, area_rel_dab]))
 
-    # Creating the summary image
+    # Creating the complex image
     plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh)
     plt.savefig(path_output_image)
 
     log_and_console(pathOutputLog, "Image saved: {}".format(path_output_image))
 
-    # In silent mode image would be closed immediately
+    # In silent mode image will be closed immediately
     if not args.silent:
         plt.pause(var_pause)
     return array_data
@@ -330,10 +330,10 @@ def main():
     for filename in filenames:
         arrayFilenames = np.vstack((arrayFilenames, filename))
 
-    # Summary csv after main cycle end
+    # Creating summary csv after main cycle end
     save_csv(pathOutputCSV, arrayFilenames, arrayData)
 
-    # End the global timer
+    # End of the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
     if not args.silent:
         averageImageTime = (elapsedGlobal - len(filenames)*varPause)/len(filenames)  # compensate the pause
