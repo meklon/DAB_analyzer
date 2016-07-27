@@ -11,6 +11,7 @@ from skimage import color
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 import hasel
 
@@ -363,9 +364,13 @@ def main():
 
     dataFrame = pd.DataFrame(dataFrameData, columns=columnNames)
     dataFrame = dataFrame.convert_objects(convert_numeric=True)
-    print(dataFrame)
-    groupby_sample = dataFrame['DAB+ area'].groupby(dataFrame['Group'])
-    print(groupby_sample.agg([np.mean,np.std]))
+    #groupby_sample = dataFrame['DAB+ area'].groupby(dataFrame['Group'])
+
+    plt.figure()
+    sns.violinplot(x="Group", y="DAB+ area", data=dataFrame, inner=None)
+    sns.swarmplot(x="Group", y="DAB+ area", data=dataFrame, color="w", alpha=.5)
+
+    plt.pause(300)
 
     # End of the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
