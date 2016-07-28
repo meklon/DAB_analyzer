@@ -320,27 +320,41 @@ def group_filenames(filenames):
     return array_file_group
 
 
-def group_analyze(filenames, array_data):
-    #optional import
-    import seaborn as sns
+def group_analyze(filenames, array_data, path_output):
+    # optional import
     import pandas as pd
 
     # Creating groups of samples using the filename
     arrayFileGroup = group_filenames(filenames)
 
-    #Creating pandas DataFrame
+    # Creating pandas DataFrame
     columnNames = ['Group', 'DAB+ area']
     dataFrameData = np.hstack((arrayFileGroup, array_data))
 
     dataFrame = pd.DataFrame(dataFrameData, columns=columnNames)
     dataFrame = dataFrame.convert_objects(convert_numeric=True)
-    #groupby_sample = dataFrame['DAB+ area'].groupby(dataFrame['Group'])
-    plt.figure()
-    sns.violinplot(x="Group", y="DAB+ area", data=dataFrame, inner=None)
-    sns.swarmplot(x="Group", y="DAB+ area", data=dataFrame, color="w", alpha=.5)
+    # groupby_sample = dataFrame['DAB+ area'].groupby(dataFrame['Group'])
+    plot_group(dataFrame, path_output)
 
-    plt.pause(300)
+def plot_group(data_frame, path_output):
+    # optional import
+    import seaborn as sns
+    path_output_image = os.path.join(path_output, "summary_statistics.png")
 
+    plt.figure(num=None, figsize=(15, 7), dpi=120)
+    sns.set_style("whitegrid")
+
+    plt.subplot(121)
+    plt.title('Violin plot with single measurements')
+    sns.violinplot(x="Group", y="DAB+ area", data=data_frame, inner=None)
+    sns.swarmplot(x="Group", y="DAB+ area", data=data_frame, color="w", alpha=.5)
+
+    plt.subplot(122)
+    plt.title('Box plot')
+    sns.boxplot(x="Group", y="DAB+ area", data=data_frame)
+
+    plt.tight_layout()
+    plt.savefig(path_output_image)
 
 
 def main():
@@ -384,8 +398,9 @@ def main():
     # Creating summary csv after main cycle end
     save_csv(pathOutputCSV, arrayFilenames, arrayData)
 
+    # Optional statistical group analysis.
     if args.analyze:
-        group_analyze(filenames, arrayData)
+        group_analyze(filenames, arrayData, pathOutput)
 
     # End of the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
