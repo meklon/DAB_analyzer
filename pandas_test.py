@@ -10,8 +10,7 @@ from scipy import linalg, misc
 from skimage import color
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
+
 
 import hasel
 
@@ -34,6 +33,13 @@ def parse_arguments():
     parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
                                                                " only final results"
                                                                " will be saved", action="store_true")
+    parser.add_argument("-a", "--analyze", required=False, help="Add group analysis after the indvidual image"
+                                                                " processing. The groups are created using the"
+                                                                " filename. Everything before '_' symbol will"
+                                                                " be recognized as a group name. Example:"
+                                                                " sample01_10.jpg, sample01_11.jpg will be"
+                                                                " counted as a single group 'sample01'",
+                                                                action="store_true")
     arguments = parser.parse_args()
     return arguments
 
@@ -314,6 +320,29 @@ def group_filenames(filenames):
     return array_file_group
 
 
+def group_analyze(filenames, array_data):
+    #optional import
+    import seaborn as sns
+    import pandas as pd
+
+    # Creating groups of samples using the filename
+    arrayFileGroup = group_filenames(filenames)
+
+    #Creating pandas DataFrame
+    columnNames = ['Group', 'DAB+ area']
+    dataFrameData = np.hstack((arrayFileGroup, array_data))
+
+    dataFrame = pd.DataFrame(dataFrameData, columns=columnNames)
+    dataFrame = dataFrame.convert_objects(convert_numeric=True)
+    #groupby_sample = dataFrame['DAB+ area'].groupby(dataFrame['Group'])
+    plt.figure()
+    sns.violinplot(x="Group", y="DAB+ area", data=dataFrame, inner=None)
+    sns.swarmplot(x="Group", y="DAB+ area", data=dataFrame, color="w", alpha=.5)
+
+    plt.pause(300)
+
+
+
 def main():
     arrayData = np.empty([0, 1])
     # Pause in seconds between the composite images when --silent(-s) argument is not active
@@ -355,22 +384,8 @@ def main():
     # Creating summary csv after main cycle end
     save_csv(pathOutputCSV, arrayFilenames, arrayData)
 
-    # Creating groups of samples using the filename
-    arrayFileGroup = group_filenames(filenames)
-
-    #Creating pandas DataFrame
-    columnNames = ['Group', 'DAB+ area']
-    dataFrameData = np.hstack((arrayFileGroup, arrayData))
-
-    dataFrame = pd.DataFrame(dataFrameData, columns=columnNames)
-    dataFrame = dataFrame.convert_objects(convert_numeric=True)
-    #groupby_sample = dataFrame['DAB+ area'].groupby(dataFrame['Group'])
-
-    plt.figure()
-    sns.violinplot(x="Group", y="DAB+ area", data=dataFrame, inner=None)
-    sns.swarmplot(x="Group", y="DAB+ area", data=dataFrame, color="w", alpha=.5)
-
-    plt.pause(300)
+    if args.analyze:
+        group_analyze(filenames, arrayData)
 
     # End of the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
