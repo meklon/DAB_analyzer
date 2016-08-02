@@ -80,7 +80,7 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 
 *-s, --silent* (otional) - if True, the real-time composite image visualisation would be supressed. The output will be just saved in the result folder.
 
-*-a, --analyze* (optional) - Add group analysis after the indvidual image processing. The groups are created using the filename. Everything before _ symbol will be recognized as a group name. Example: *Native_10.jpg, Native_11.jpg* will be counted as a single group *Native*.
+*-a, --analyze* (optional) - Add group analysis after the indvidual image processing. The groups are created using the filename. Everything before _ symbol will be recognized as a group name. Example: **Native_10.jpg, Native_11.jpg** will be counted as a single group **Native**.
 
 ####Example
 ````
