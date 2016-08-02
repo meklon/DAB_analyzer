@@ -8,6 +8,7 @@ Quantitative analysis of extracellular matrix proteins in IHC-analysis, designed
 Python 2.7 or Python 3.4-3.5
 
 Python libraries: numpy, scipy, skimage, matplotlib
+
 Optional (for group analysis): pandas, seaborn
 
 ### Interface type:
@@ -41,14 +42,6 @@ Image saved: /home/meklon/temp/sample_native/result/Col1_02_analysis.png
 Image saved: /home/meklon/temp/sample_native/result/Col1_01_analysis.png
 Image saved: /home/meklon/temp/sample_native/result/Col4_02_analysis.png
 Image saved: /home/meklon/temp/sample_native/result/Col4_03_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Fibr_04_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Fibr_05_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Fibr_06_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Fibr_07_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Fibr_08_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Lam_02_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Lam_01_analysis.png
-Image saved: /home/meklon/temp/sample_native/result/Lam_04_analysis.png
 Group analysis is active
 Statistical data for each group was saved as stats.csv
 Boxplot with statistics was saved as summary_statistics.png
@@ -61,6 +54,8 @@ Filename | DAB-positive area, %
 Alex_Pan_06.jpg|61.55
 Native_Pan_05.jpg|14.23
 Native_Trop_02.jpg|10.83
+
+#### Statistical data output example
 
 ### User manual
 Place all the sample images (8-bit) inside the separate folder. Subdirectories are excluded from analysis. Use the following options:
