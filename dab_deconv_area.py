@@ -11,7 +11,11 @@ from skimage import color
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
+
 import hasel
+
+# Optional imports of pandas and seaborn are located in functions
+# group_analyze() and plot_group().
 
 
 def parse_arguments():
@@ -21,17 +25,24 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
-    parser.add_argument("-t", "--thresh", required=False, default=30,
+    parser.add_argument("-t", "--thresh", required=False, default=40,
                         type=int, help="Global threshold for DAB-positive area,"
                                        "from 0 to 100.Optimal values are usually"
-                                       " located from 25 to 45.")
-    parser.add_argument("-e", "--empty", required=False, default=92,
+                                       " located from 35 to 55.")
+    parser.add_argument("-e", "--empty", required=False, default=101,
                         type=int, help="Global threshold for EMPTY area,"
-                                       "from 0 to 100.Optimal values are usually"
-                                       " located from 88 to 95.")
+                                       "from 0 to 100. Default value is 101,"
+                                       " which is equal to disabled empty area filter.")
     parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
                                                                " only final results"
                                                                " will be saved", action="store_true")
+    parser.add_argument("-a", "--analyze", required=False, help="Add group analysis after the indvidual image"
+                                                                " processing. The groups are created using the"
+                                                                " filename. Everything before '_' symbol will"
+                                                                " be recognized as a group name. Example:"
+                                                                " sample01_10.jpg, sample01_11.jpg will be"
+                                                                " counted as a single group 'sample01'",
+                                                                action="store_true")
     arguments = parser.parse_args()
     return arguments
 
@@ -142,10 +153,11 @@ def count_areas(thresh_dab, thresh_empty):
     # NB! Relative DAB is counted without empty areas
     area_rel_empty = round((area_empty / area_all * 100), 2)
     area_rel_dab = round((area_dab_pos / (area_all - area_empty) * 100), 2)
-    return area_dab_pos, area_rel_empty, area_rel_dab
+    return area_rel_empty, area_rel_dab
 
 
-def plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, thresh_default):
+def plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty,
+                thresh_default, tresh_empty_default):
     """
     Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
     Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
@@ -185,21 +197,29 @@ def plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thre
     plt.title('DAB positive area')
     plt.imshow(thresh_dab, cmap=plt.cm.gray)
 
-    plt.subplot(236)
-    plt.title('Empty area')
-    plt.imshow(thresh_empty, cmap=plt.cm.gray)
+    if not tresh_empty_default>100:
+        plt.subplot(236)
+        plt.title('Empty area')
+        plt.imshow(thresh_empty, cmap=plt.cm.gray)
 
     plt.tight_layout()
 
 
+def stack_data(array_filenames, array_data):
+    """
+    Function stacks the data from numpy arrays.
+    """
+    array_output = np.hstack((array_filenames, array_data))
+    array_output = np.vstack((["Filename", "DAB-positive area, %"], array_output))
+    return array_output
+
+
 def save_csv(path_output_csv, array_filenames, array_data):
     """
-    Function formats the data from numpy array and puts it to the output csv file.
+    Function puts data array to the output csv file.
     """
+    array_output = stack_data(array_filenames, array_data)
 
-    array_output = np.hstack((array_filenames, array_data))
-    array_output = np.vstack((["Filename", "DAB-positive area, pixels",
-                                           "Empty area, %", "DAB-positive area, %"], array_output))
     # write array to csv file
     with open(path_output_csv, 'w') as f:
         csv.writer(f).writerows(array_output)
@@ -234,6 +254,7 @@ def grayscale_to_stain_color(stain_dab):
     Converts grayscale map of stain distribution to the colour representation.
     The original grayscale is used as a L-channel in HSL colour space.
     Hue and Saturation channels are defined manually.
+    Disabled now, fix needed.
     """
     # todo: Fix the grayscale to colour conversion
     # DAB colour in HSL
@@ -272,17 +293,18 @@ def image_process(array_data, var_pause, matrix_dh, args, pathOutput, pathOutput
 
     stain_dab, stain_dab_1d, channel_lightness = separate_channels(image_original, matrix_dh)
     thresh_dab, thresh_empty = count_thresholds(stain_dab, channel_lightness, args.thresh, args.empty)
-    area_dab_pos, area_rel_empty, area_rel_dab = count_areas(thresh_dab, thresh_empty)
+    area_rel_empty, area_rel_dab = count_areas(thresh_dab, thresh_empty)
     # stain_dab = grayscale_to_stain_color(stain_dab)
 
     # Close all figures after cycle end
     plt.close('all')
 
-    array_data = np.vstack((array_data, [area_dab_pos, area_rel_empty, area_rel_dab]))
+    array_data = np.vstack((array_data, area_rel_dab))
 
     # Creating the complex image
-    plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh)
-    plt.savefig(path_output_image)
+    plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh,
+                args.empty)
+    plt.savefig(path_output_image, dpi=120)
 
     log_and_console(pathOutputLog, "Image saved: {}".format(path_output_image))
 
@@ -292,9 +314,70 @@ def image_process(array_data, var_pause, matrix_dh, args, pathOutput, pathOutput
     return array_data
 
 
+def group_filenames(filenames):
+    """
+    Creates groups of samples cutting filename after "_" symbol. Used to count
+     statistics for each sample group.
+    """
+
+    array_file_group = np.empty([0, 1])
+    for filename in filenames:
+        filename = filename.split("_")[0]
+        array_file_group = np.vstack((array_file_group, filename))
+    return array_file_group
+
+
+def group_analyze(filenames, array_data, path_output):
+    # optional import
+    import pandas as pd
+
+    path_output_stats = os.path.join(path_output, "stats.csv")
+    # Creating groups of samples using the filename
+    array_file_group = group_filenames(filenames)
+
+    # Creating pandas DataFrame
+    column_names = ['Group', 'DAB+ area, %']
+    data_frame_data = np.hstack((array_file_group, array_data))
+
+    df = pd.DataFrame(data_frame_data, columns=column_names)
+    df = df.convert_objects(convert_numeric=True)
+    groupby_group = df['DAB+ area, %'].groupby(df['Group'])
+    data_stats = groupby_group.agg([np.mean, np.std, np.median, np.min, np.max])
+    data_stats.to_csv(path_output_stats)
+    print(data_stats)
+    plot_group(df, path_output)
+
+
+def plot_group(data_frame, path_output):
+    # optional import
+    import seaborn as sns
+    path_output_image = os.path.join(path_output, "summary_statistics.png")
+
+    # # Plotting swarmplot
+    # plt.figure(num=None, figsize=(15, 7), dpi=120)
+    # sns.set_style("whitegrid")
+    #
+    # plt.title('Violin plot with single measurements')
+    # sns.violinplot(x="Group", y="DAB+ area", data=data_frame, inner=None)
+    # sns.swarmplot(x="Group", y="DAB+ area", data=data_frame, color="w", alpha=.5)
+    # plt.savefig(path_output_image)
+    #
+    # plt.tight_layout()
+
+    sns.set_style("whitegrid")
+    sns.set_context("talk")
+    plt.figure(num=None, figsize=(15, 7), dpi=120)
+    plt.ylim(0, 100)
+    plt.title('Box plot')
+    sns.boxplot(x="Group", y="DAB+ area, %", data=data_frame)
+
+    plt.tight_layout()
+    plt.savefig(path_output_image, dpi=300)
+
+
 def main():
-    arrayData = np.empty([0, 3])
-    # Pause in seconds between the complex images when --silent(-s) argument is not active
+    arrayData = np.empty([0, 1])
+    # Pause in seconds between the composite images when --silent(-s) argument is not active
     varPause = 5
 
     # Initialize the global timer
@@ -309,6 +392,10 @@ def main():
     log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
     log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) +
                     ", Empty threshold = " + str(args.empty))
+    if args.empty>100:
+        log_and_console(pathOutputLog, "Empty area filtering is disabled.")
+        log_and_console(pathOutputLog, "It should be adjusted in a case of hollow organ or unavoidable edge defects")
+
 
     # Calculate the DAB and HE deconvolution matrix
     matrixDH = calc_deconv_matrix(matrixVectorDabHE)
@@ -332,6 +419,13 @@ def main():
 
     # Creating summary csv after main cycle end
     save_csv(pathOutputCSV, arrayFilenames, arrayData)
+
+    # Optional statistical group analysis.
+    if args.analyze:
+        log_and_console(pathOutputLog,"Group analysis is active")
+        group_analyze(filenames, arrayData, pathOutput)
+        log_and_console(pathOutputLog,"Statistical data for each group was saved as stats.csv")
+        log_and_console(pathOutputLog,"Boxplot with statistics was saved as summary_statistics.png")
 
     # End of the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
