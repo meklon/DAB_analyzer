@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 
 import hasel
 
+# Optional imports of pandas and seaborn are located in functions
+# group_analyze() and plot_group().
+
 
 def parse_arguments():
     """
@@ -22,14 +25,14 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", required=True, help="Path to the directory or file")
-    parser.add_argument("-t", "--thresh", required=False, default=30,
+    parser.add_argument("-t", "--thresh", required=False, default=40,
                         type=int, help="Global threshold for DAB-positive area,"
                                        "from 0 to 100.Optimal values are usually"
-                                       " located from 25 to 45.")
-    parser.add_argument("-e", "--empty", required=False, default=92,
+                                       " located from 35 to 55.")
+    parser.add_argument("-e", "--empty", required=False, default=100,
                         type=int, help="Global threshold for EMPTY area,"
-                                       "from 0 to 100.Optimal values are usually"
-                                       " located from 88 to 95.")
+                                       "from 0 to 100. Default value is 100,"
+                                       " which is equal to disabled empty area filter.")
     parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
                                                                " only final results"
                                                                " will be saved", action="store_true")
@@ -249,6 +252,7 @@ def grayscale_to_stain_color(stain_dab):
     Converts grayscale map of stain distribution to the colour representation.
     The original grayscale is used as a L-channel in HSL colour space.
     Hue and Saturation channels are defined manually.
+    Disabled now, fix needed.
     """
     # todo: Fix the grayscale to colour conversion
     # DAB colour in HSL
@@ -297,7 +301,7 @@ def image_process(array_data, var_pause, matrix_dh, args, pathOutput, pathOutput
 
     # Creating the complex image
     plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh)
-    plt.savefig(path_output_image)
+    plt.savefig(path_output_image, dpi=120)
 
     log_and_console(pathOutputLog, "Image saved: {}".format(path_output_image))
 
@@ -325,36 +329,42 @@ def group_analyze(filenames, array_data, path_output):
     import pandas as pd
 
     # Creating groups of samples using the filename
-    arrayFileGroup = group_filenames(filenames)
+    array_file_group = group_filenames(filenames)
 
     # Creating pandas DataFrame
-    columnNames = ['Group', 'DAB+ area']
-    dataFrameData = np.hstack((arrayFileGroup, array_data))
+    column_names = ['Group', 'DAB+ area, %']
+    data_frame_data = np.hstack((array_file_group, array_data))
 
-    dataFrame = pd.DataFrame(dataFrameData, columns=columnNames)
-    dataFrame = dataFrame.convert_objects(convert_numeric=True)
-    # groupby_sample = dataFrame['DAB+ area'].groupby(dataFrame['Group'])
-    plot_group(dataFrame, path_output)
+    df = pd.DataFrame(data_frame_data, columns=column_names)
+    df = df.convert_objects(convert_numeric=True)
+    # groupby_sample = df['DAB+ area'].groupby(df['Group'])
+    plot_group(df, path_output)
+
 
 def plot_group(data_frame, path_output):
     # optional import
     import seaborn as sns
     path_output_image = os.path.join(path_output, "summary_statistics.png")
 
-    plt.figure(num=None, figsize=(15, 7), dpi=120)
+    # # Plotting swarmplot
+    # plt.figure(num=None, figsize=(15, 7), dpi=120)
+    # sns.set_style("whitegrid")
+    #
+    # plt.title('Violin plot with single measurements')
+    # sns.violinplot(x="Group", y="DAB+ area", data=data_frame, inner=None)
+    # sns.swarmplot(x="Group", y="DAB+ area", data=data_frame, color="w", alpha=.5)
+    # plt.savefig(path_output_image)
+    #
+    # plt.tight_layout()
+
     sns.set_style("whitegrid")
-
-    plt.subplot(121)
-    plt.title('Violin plot with single measurements')
-    sns.violinplot(x="Group", y="DAB+ area", data=data_frame, inner=None)
-    sns.swarmplot(x="Group", y="DAB+ area", data=data_frame, color="w", alpha=.5)
-
-    plt.subplot(122)
+    plt.figure(num=None, figsize=(15, 7), dpi=120)
+    plt.ylim(0, 100)
     plt.title('Box plot')
-    sns.boxplot(x="Group", y="DAB+ area", data=data_frame)
+    sns.boxplot(x="Group", y="DAB+ area, %", data=data_frame)
 
     plt.tight_layout()
-    plt.savefig(path_output_image)
+    plt.savefig(path_output_image, dpi=300)
 
 
 def main():
@@ -400,7 +410,9 @@ def main():
 
     # Optional statistical group analysis.
     if args.analyze:
+        log_and_console(pathOutputLog,"Group analysis is active")
         group_analyze(filenames, arrayData, pathOutput)
+        log_and_console(pathOutputLog,"Data was saved as summary_statistics.png")
 
     # End of the global timer
     elapsedGlobal = timeit.default_timer() - startTimeGlobal
