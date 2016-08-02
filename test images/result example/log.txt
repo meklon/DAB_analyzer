@@ -1,7 +1,72 @@
-Images for analysis: 4
-Image 1 / 4 saved: test images/sample example/result/Alex_Pan_06_analysis.png
-Image 2 / 4 saved: test images/sample example/result/Alex_Pan_08_analysis.png
-Image 3 / 4 saved: test images/sample example/result/Native_Pan_05_analysis.png
-Image 4 / 4 saved: test images/sample example/result/Native_Trop_02_analysis.png
-Analysis time: 5.7 seconds
-Average time per image: 1.4 seconds
+Images for analysis: 62
+DAB threshold = 40, Empty threshold = 101
+Empty area filtering is disabled.
+It should be adjusted in a case of hollow organ or unavoidable edge defects
+CPU cores used: 2
+Image saved: /home/meklon/temp/sample_native/result/Col1_02_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_01_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_03_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_04_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_05_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_06_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_07_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_08_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col1_09_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_01_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_02_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_03_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_04_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_05_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_06_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_07_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_08_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Col4_09_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_01_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_02_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_03_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_04_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_05_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_06_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_07_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Fibr_08_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_02_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_01_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_04_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_03_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_05_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_06_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_07_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_08_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Lam_09_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_01_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_03_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_02_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_04_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_05_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_06_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_07_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Pan_08_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_01_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_02_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_03_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_04_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_05_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_06_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_07_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_08_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_09_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/Trop_10_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_01_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_02_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_03_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_04_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_05_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_06_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_07_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_08_analysis.png
+Image saved: /home/meklon/temp/sample_native/result/VEGF_09_analysis.png
+Group analysis is active
+Statistical data for each group was saved as stats.csv
+Boxplot with statistics was saved as summary_statistics.png
+Analysis time: 44.3 seconds
+Average time per image: 0.7 seconds
