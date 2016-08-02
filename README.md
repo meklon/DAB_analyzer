@@ -31,6 +31,9 @@ Script will render this type of image for **each of your samples**. User should 
 
 ![Composite image example 2](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/Alex_Pan_08_analysis.png "Composite image example")
 
+#### Summary statistics image example
+![Stat image example](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/summary_statistics.png "Stat image example")
+
 #### Log example
 ```
 Images for analysis: 62
@@ -73,9 +76,11 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 
 *-t, --thresh* (optional) - threshold for DAB+ area separation. If empty the default value would be used (threshDefault = 30).
 
-*-e, --empty* (optional) - threshold for **empty area** separation. If empty the default value would be used (threshEmptyDefault = 92).
+*-e, --empty* (optional) - threshold for **empty area** separation. If empty the default value would be used (threshEmptyDefault = 101). It is disabled for default and should be used only in a case of hollow organs and unavoidable edge defects.
 
 *-s, --silent* (otional) - if True, the real-time composite image visualisation would be supressed. The output will be just saved in the result folder.
+
+*-a, --analyze* (optional) - Add group analysis after the indvidual image processing. The groups are created using the filename. Everything before _ symbol will be recognized as a group name. Example: *Native_10.jpg, Native_11.jpg* will be counted as a single group *Native*.
 
 ####Example
 ````
@@ -88,6 +93,7 @@ python dab_deconv_area.py -p /home/meklon/Data/sample/test/ -t 35 -e 89 -s -a
 3. Threshold should be the same at the whole image sequence if you want to compare them
 4. It would be better to use the manual mode in microscope camera to be sure, that your images were taken with the same parameters.
 5. Don't change light intensity in microscope during the sequence acquiring.
+6. Correct file naming should be used if group analysis is active. Everything before _ symbol will be recognized as a group name.
 
 ### Authorship
 Gumenyuk Ivan, Kuban state medical university, Russia.
