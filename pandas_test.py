@@ -29,9 +29,9 @@ def parse_arguments():
                         type=int, help="Global threshold for DAB-positive area,"
                                        "from 0 to 100.Optimal values are usually"
                                        " located from 35 to 55.")
-    parser.add_argument("-e", "--empty", required=False, default=100,
+    parser.add_argument("-e", "--empty", required=False, default=101,
                         type=int, help="Global threshold for EMPTY area,"
-                                       "from 0 to 100. Default value is 100,"
+                                       "from 0 to 100. Default value is 101,"
                                        " which is equal to disabled empty area filter.")
     parser.add_argument("-s", "--silent", required=False, help="Supress figure rendering during the analysis,"
                                                                " only final results"
@@ -156,7 +156,8 @@ def count_areas(thresh_dab, thresh_empty):
     return area_rel_empty, area_rel_dab
 
 
-def plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, thresh_default):
+def plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty,
+                thresh_default, tresh_empty_default):
     """
     Function plots the figure for every sample image. It creates the histogram from the stainDAB array.
     Then it takes the bins values and clears the plot. That's done because fill_between function doesn't
@@ -196,9 +197,10 @@ def plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thre
     plt.title('DAB positive area')
     plt.imshow(thresh_dab, cmap=plt.cm.gray)
 
-    plt.subplot(236)
-    plt.title('Empty area')
-    plt.imshow(thresh_empty, cmap=plt.cm.gray)
+    if not tresh_empty_default>100:
+        plt.subplot(236)
+        plt.title('Empty area')
+        plt.imshow(thresh_empty, cmap=plt.cm.gray)
 
     plt.tight_layout()
 
@@ -300,7 +302,8 @@ def image_process(array_data, var_pause, matrix_dh, args, pathOutput, pathOutput
     array_data = np.vstack((array_data, area_rel_dab))
 
     # Creating the complex image
-    plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh)
+    plot_figure(image_original, stain_dab, stain_dab_1d, channel_lightness, thresh_dab, thresh_empty, args.thresh,
+                args.empty)
     plt.savefig(path_output_image, dpi=120)
 
     log_and_console(pathOutputLog, "Image saved: {}".format(path_output_image))
@@ -358,6 +361,7 @@ def plot_group(data_frame, path_output):
     # plt.tight_layout()
 
     sns.set_style("whitegrid")
+    sns.set_context("talk")
     plt.figure(num=None, figsize=(15, 7), dpi=120)
     plt.ylim(0, 100)
     plt.title('Box plot')
@@ -384,6 +388,10 @@ def main():
     log_and_console(pathOutputLog, "Images for analysis: " + str(len(filenames)), True)
     log_and_console(pathOutputLog, "DAB threshold = " + str(args.thresh) +
                     ", Empty threshold = " + str(args.empty))
+    if args.empty>100:
+        log_and_console(pathOutputLog, "Empty area filtering is disabled.")
+        log_and_console(pathOutputLog, "It should be adjusted in a case of hollow organ or unavoidable edge defects")
+
 
     # Calculate the DAB and HE deconvolution matrix
     matrixDH = calc_deconv_matrix(matrixVectorDabHE)
