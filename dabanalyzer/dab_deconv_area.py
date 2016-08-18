@@ -376,6 +376,15 @@ def plot_group(data_frame, path_output):
 
 
 def main():
+    """
+    Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
+    More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
+    Declare vectors as a constant
+    """
+    matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
+                                  [0.4100872, 0.5751321, 0.70785],
+                                  [0.6241389, 0.53632, 0.56816506]])
+
     arrayData = np.empty([0, 1])
     # Pause in seconds between the composite images when --silent(-s) argument is not active
     varPause = 5
@@ -435,16 +444,3 @@ def main():
         averageImageTime = elapsedGlobal/len(filenames)
     log_and_console(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
     log_and_console(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
-
-
-if __name__ == '__main__':
-    """
-    Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
-    More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
-    Declare vectors as a constant
-    """
-    matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
-                                  [0.4100872, 0.5751321, 0.70785],
-                                  [0.6241389, 0.53632, 0.56816506]])
-
-    main()
