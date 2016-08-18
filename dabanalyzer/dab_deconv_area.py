@@ -12,7 +12,7 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
 
-import hasel
+from . import hasel
 
 # Optional imports of pandas and seaborn are located in functions
 # group_analyze() and plot_group().

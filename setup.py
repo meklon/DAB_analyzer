@@ -13,12 +13,11 @@ content in tested samples.
     maintainer='Ivan Gumenyuk',
     maintainer_email='meklon@gmail.com',
     url='https://github.com/meklon/DAB_analyzer',
-    namespace_packages=["dabanalyzer"],
     packages=find_packages(exclude=[
         "tests", "tmp", "docs", "data", "test images"]),
     install_requires=[
         'pandas>=0.18.0', 'numpy>=1.11.0', 'scipy',
-        'scimage', 'matplotlib', 'seaborn',
+        'scikit-image', 'matplotlib', 'seaborn',
     ],
     setup_requires=[
         'pytest-runner',
