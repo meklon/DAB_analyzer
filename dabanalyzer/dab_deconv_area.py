@@ -2,6 +2,7 @@ import argparse
 import os
 import csv
 import timeit
+import json
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
@@ -43,6 +44,7 @@ def parse_arguments():
                                                                 " sample01_10.jpg, sample01_11.jpg will be"
                                                                 " counted as a single group 'sample01'",
                                                                 action="store_true")
+    parser.add_argument("-m", "--matrix", required=False, help="Your matrix in a JSON formatted file")
     arguments = parser.parse_args()
     return arguments
 
@@ -394,6 +396,11 @@ def main():
 
     # Parse the arguments
     args = parse_arguments()
+
+    if args.matrix:
+        with open(args.matrix) as f:
+            matrixVectorDabHE = np.array(json.load(f))
+
     pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
 
     check_mkdir_output_path(pathOutput)
