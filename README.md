@@ -51,7 +51,7 @@ Script will render this type of image for **each of your samples**. User should 
 
 #### Summary statistics image example
 ![Stat image example](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/summary_statistics.png "Stat image example")
-Now to read box plot:
+How to read box plot:
 
 ![](http://i1.wp.com/flowingdata.com/wp-content/uploads/2008/02/box-plot-explained.gif?w=1090)
 #### Log example
