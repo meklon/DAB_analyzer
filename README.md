@@ -14,7 +14,12 @@ Optional (for group analysis): pandas, seaborn
 ### Installation:
 Install **pip** using your system package manager. For example in Debian/Ubuntu:
 ```
-sudo apt-get install pip
+sudo apt-get install python-pip
+```
+or
+
+```
+sudo apt-get install python3-pip
 ```
 
 Clone this repository
@@ -22,6 +27,11 @@ Clone this repository
 In the root folder of repository clone perform:
 ```
 sudo pip install .
+```
+or
+
+```
+sudo pip3 install .
 ```
 
 Uninstall:
