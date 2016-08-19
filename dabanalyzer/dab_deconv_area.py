@@ -2,6 +2,7 @@ import argparse
 import os
 import csv
 import timeit
+import json
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
@@ -12,7 +13,7 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 
 
-import hasel
+from . import hasel
 
 # Optional imports of pandas and seaborn are located in functions
 # group_analyze() and plot_group().
@@ -43,6 +44,7 @@ def parse_arguments():
                                                                 " sample01_10.jpg, sample01_11.jpg will be"
                                                                 " counted as a single group 'sample01'",
                                                                 action="store_true")
+    parser.add_argument("-m", "--matrix", required=False, help="Your matrix in a JSON formatted file")
     arguments = parser.parse_args()
     return arguments
 
@@ -376,6 +378,15 @@ def plot_group(data_frame, path_output):
 
 
 def main():
+    """
+    Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
+    More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
+    Declare vectors as a constant
+    """
+    matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
+                                  [0.4100872, 0.5751321, 0.70785],
+                                  [0.6241389, 0.53632, 0.56816506]])
+
     arrayData = np.empty([0, 1])
     # Pause in seconds between the composite images when --silent(-s) argument is not active
     varPause = 5
@@ -385,6 +396,11 @@ def main():
 
     # Parse the arguments
     args = parse_arguments()
+
+    if args.matrix:
+        with open(args.matrix) as f:
+            matrixVectorDabHE = np.array(json.load(f))
+
     pathOutput, pathOutputLog, pathOutputCSV = get_output_paths(args.path)
 
     check_mkdir_output_path(pathOutput)
@@ -435,16 +451,3 @@ def main():
         averageImageTime = elapsedGlobal/len(filenames)
     log_and_console(pathOutputLog, "Analysis time: {:.1f} seconds".format(elapsedGlobal))
     log_and_console(pathOutputLog, "Average time per image: {:.1f} seconds".format(averageImageTime))
-
-
-if __name__ == '__main__':
-    """
-    Yor own matrix should be placed here. You can use ImageJ and color deconvolution module for it.
-    More information here: http://www.mecourse.com/landinig/software/cdeconv/cdeconv.html
-    Declare vectors as a constant
-    """
-    matrixVectorDabHE = np.array([[0.66504073, 0.61772484, 0.41968665],
-                                  [0.4100872, 0.5751321, 0.70785],
-                                  [0.6241389, 0.53632, 0.56816506]])
-
-    main()
