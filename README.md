@@ -12,17 +12,29 @@ Python libraries: numpy, scipy, skimage, matplotlib
 Optional (for group analysis): pandas, seaborn
 
 ### Installation:
-1. Install **pip** using your system package manager. For example in Debian/Ubuntu:
+Install **pip** using your system package manager. For example in Debian/Ubuntu:
 ```
-sudo apt-get install pip
+sudo apt-get install python-pip
 ```
-2. Clone this repository
-3. In the root folder of repository clone perform:
+or
+
+```
+sudo apt-get install python3-pip
+```
+
+Clone this repository
+
+In the root folder of repository clone perform:
 ```
 sudo pip install .
 ```
-This will install dabanalyzer package into your system
-4. Uninstall:
+or
+
+```
+sudo pip3 install .
+```
+
+Uninstall:
 ```
 sudo pip uninstall dabanalyzer
 ```
@@ -49,7 +61,7 @@ Script will render this type of image for **each of your samples**. User should 
 
 #### Summary statistics image example
 ![Stat image example](https://github.com/meklon/DAB_analyzer/blob/master/test%20images/result%20example/summary_statistics.png "Stat image example")
-Now to read box plot:
+How to read box plot:
 
 ![](http://i1.wp.com/flowingdata.com/wp-content/uploads/2008/02/box-plot-explained.gif?w=1090)
 #### Log example
