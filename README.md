@@ -12,17 +12,19 @@ Python libraries: numpy, scipy, skimage, matplotlib
 Optional (for group analysis): pandas, seaborn
 
 ### Installation:
-1. Install **pip** using your system package manager. For example in Debian/Ubuntu:
+Install **pip** using your system package manager. For example in Debian/Ubuntu:
 ```
 sudo apt-get install pip
 ```
-2. Clone this repository
-3. In the root folder of repository clone perform:
+
+Clone this repository
+
+In the root folder of repository clone perform:
 ```
 sudo pip install .
 ```
-This will install dabanalyzer package into your system
-4. Uninstall:
+
+Uninstall:
 ```
 sudo pip uninstall dabanalyzer
 ```
