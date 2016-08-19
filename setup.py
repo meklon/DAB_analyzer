@@ -2,11 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name='dabanalyzer',
-    version='0.0.1',
+    version='1.6',
     description='DAB-chromagen analysis tool',
     longer_description='''
 DAB Analyzer counts the stained area with
-DAB-chromagen using the typical immunohistochemistry protocols.
+DAB-chromagen using the typical immunohystochemistry protocols.
 After the analysis user can measure the difference of proteins
 content in tested samples.
 ''',
@@ -16,8 +16,8 @@ content in tested samples.
     packages=find_packages(exclude=[
         "tests", "tmp", "docs", "data", "test images"]),
     install_requires=[
-        'pandas>=0.18.0', 'numpy>=1.11.0', 'scipy',
-        'scikit-image', 'matplotlib', 'seaborn',
+        'pandas>=0.17.1', 'numpy>=1.11.0', 'scipy',
+        'scikit-image', 'matplotlib', 'seaborn>=0.7.1',
     ],
     setup_requires=[
         'pytest-runner',

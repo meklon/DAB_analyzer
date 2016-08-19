@@ -11,6 +11,22 @@ Python libraries: numpy, scipy, skimage, matplotlib
 
 Optional (for group analysis): pandas, seaborn
 
+### Installation:
+1. Install **pip** using your system package manager. For example in Debian/Ubuntu:
+```
+sudo apt-get install pip
+```
+2. Clone this repository
+3. In the root folder of repository clone perform:
+```
+sudo pip install .
+```
+This will install dabanalyzer package into your system
+4. Uninstall:
+```
+sudo pip uninstall dabanalyzer
+```
+
 ### Interface type:
 No GUI, command line interface only.
 
@@ -84,9 +100,11 @@ Place all the sample images (8-bit) inside the separate folder. Subdirectories a
 
 *-a, --analyze* (optional) - Add group analysis after the indvidual image processing. The groups are created using the filename. Everything before _ symbol will be recognized as a group name. Example: **Native_10.jpg, Native_11.jpg** will be counted as a single group **Native**.
 
+*-m, --matrix* (optional) - Your matrix in a JSON formatted file. Could be used for alternative stain vectors. Not for regular use yet. Test in progress.
+
 ####Example
 ````
-python dab_deconv_area.py -p /home/meklon/Data/sample/test/ -t 35 -e 89 -s -a
+dabanalyzer -p /home/meklon/Data/sample/test/ -t 35 -e 89 -s -a
 ````
 
 ### Image samples requirements
