@@ -34,7 +34,7 @@ sudo pip3 install .
 
 Uninstall:
 ```
-sudo pip uninstall dabanalyzer
+sudo pip3 uninstall dabanalyzer
 ```
 
 ### Interface type:
