@@ -12,12 +12,6 @@ Python libraries: numpy, scipy, skimage, matplotlib
 Optional (for group analysis): pandas, seaborn
 
 ### Installation:
-Install scipy 0.17.0 (0.18.0 in pip is incompatible yet with seaborn):
-
-```
-sudo apt-get install python3-scipy
-```
-
 Install **pip** using your system package manager. For example in Debian/Ubuntu:
 
 ```

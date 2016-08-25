@@ -16,7 +16,7 @@ content in tested samples.
     packages=find_packages(exclude=[
         "tests", "tmp", "docs", "data", "test images"]),
     install_requires=[
-        'pandas>=0.17.1', 'numpy>=1.11.0', 'scipy<=0.17.0',
+        'pandas>=0.17.1', 'numpy>=1.11.0', 'scipy',
         'scikit-image', 'matplotlib', 'seaborn',
     ],
     setup_requires=[
